@@ -38,6 +38,64 @@ interface ClubInvite {
   created_at: string;
 }
 
+interface ClubMember {
+  profile_id: string;
+  full_name: string;
+  email: string;
+  role: MemberRole;
+  is_self: boolean;
+}
+
+const assignableRoles: Exclude<MemberRole, "owner">[] = ["admin", "coach", "player", "guest"];
+
+function MemberRoleRow({ member }: { member: ClubMember }) {
+  const queryClient = useQueryClient();
+
+  const roleMutation = useMutation({
+    mutationFn: async (nextRole: MemberRole) => {
+      const { error } = await supabase!.rpc("set_member_role" as never, {
+        p_profile_id: member.profile_id,
+        p_role: nextRole,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["club-members"] });
+      toast.success("Role updated");
+    },
+    onError: (error) => toast.error("Could not update role", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
+  const locked = member.role === "owner" || member.is_self;
+
+  return (
+    <div className="grid gap-2 rounded-lg border bg-card p-4 shadow-sm sm:grid-cols-[1fr_170px] sm:items-center">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate font-medium">{member.full_name}</p>
+          {member.is_self ? <Badge variant="outline">You</Badge> : null}
+        </div>
+        <p className="truncate text-sm text-muted-foreground">{member.email}</p>
+      </div>
+      {locked ? (
+        <Badge variant="secondary" className="w-fit capitalize sm:justify-self-end">{member.role}</Badge>
+      ) : (
+        <Select value={member.role} onValueChange={(value) => roleMutation.mutate(value as MemberRole)} disabled={roleMutation.isPending}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {assignableRoles.map((item) => (
+              <SelectItem key={item} value={item} className="capitalize">{item}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+}
+
+
 function AccessRequestRow({ request }: { request: SignupRequest }) {
   const [role, setRole] = useState<RequestRole>(request.requested_role);
   const queryClient = useQueryClient();
