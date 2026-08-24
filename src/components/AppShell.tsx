@@ -1,8 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
-  BarChart3,
-  CalendarDays,
-  ClipboardCheck,
   Crown,
   LayoutDashboard,
   LogOut,
@@ -11,8 +8,6 @@ import {
   ShieldCheck,
   Sun,
   Swords,
-  Trophy,
-  UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,13 +18,8 @@ import { cn } from "@/lib/utils";
 
 const primaryNav = [
   { to: "/", label: "Home", icon: LayoutDashboard },
-  { to: "/bookings", label: "Bookings", icon: CalendarDays },
   { to: "/scores", label: "Scores", icon: Swords },
-  { to: "/attendance", label: "Attendance", icon: ClipboardCheck },
-  { to: "/tournaments", label: "Tournaments", icon: Trophy },
-  { to: "/players", label: "Players", icon: UsersRound },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
-  { to: "/insights", label: "Stats", icon: BarChart3 },
 ];
 
 function NavItems({ compact = false }: { compact?: boolean }) {
@@ -37,7 +27,7 @@ function NavItems({ compact = false }: { compact?: boolean }) {
   const isAdmin = role === "owner" || role === "admin";
 
   return (
-    <nav className={cn("grid gap-1", compact && "grid-cols-4")}>
+    <nav className={cn("grid gap-1", compact && "grid-cols-3")}>
       {primaryNav.filter((item) => !item.adminOnly || isAdmin).map((item) => (
         <NavLink
           key={item.to}

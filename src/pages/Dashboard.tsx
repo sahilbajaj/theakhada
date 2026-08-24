@@ -1,104 +1,162 @@
-import { Activity, CalendarCheck2, Clock3, Trophy, UsersRound } from "lucide-react";
-import { format } from "date-fns";
-import { MetricTile } from "@/components/MetricTile";
+import { useMemo, useState } from "react";
+import { Plus, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRecentMatches } from "@/features/matches/data/useMatches";
 import { MatchCard } from "@/features/matches/ui/MatchCard";
+import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
+import type { MatchListItem, MatchSide } from "@/features/matches/types";
+import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
-import { useClubSnapshot } from "@/hooks/useClubData";
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function selfSideOf(match: MatchListItem, selfId: string): MatchSide | null {
+  if (match.side_a.some((p) => p.profile_id === selfId)) return "A";
+  if (match.side_b.some((p) => p.profile_id === selfId)) return "B";
+  return null;
+}
+
+function selfResultOf(match: MatchListItem, selfId: string): "W" | "L" | null {
+  if (match.status !== "final" || !match.winner_side) return null;
+  const side = selfSideOf(match, selfId);
+  if (!side) return null;
+  return side === match.winner_side ? "W" : "L";
+}
 
 export default function Dashboard() {
-  const { data, isLoading } = useClubSnapshot();
-  const matchesQuery = useRecentMatches(10);
+  const { profile } = useAuth();
+  const rosterQuery = useClubRoster();
+  const matchesQuery = useRecentMatches(50);
   const { preferNicknames } = useClubSettings();
+  const [entryOpen, setEntryOpen] = useState(false);
+  const [entryMatchId, setEntryMatchId] = useState<string | null>(null);
 
-  if (isLoading || !data) {
-    return (
-      <div className="grid gap-4">
-        <Skeleton className="h-28 rounded-lg" />
-        <div className="grid gap-4 md:grid-cols-4">
-          <Skeleton className="h-32 rounded-lg" />
-          <Skeleton className="h-32 rounded-lg" />
-          <Skeleton className="h-32 rounded-lg" />
-          <Skeleton className="h-32 rounded-lg" />
-        </div>
-      </div>
-    );
+  const selfId = profile?.id ?? null;
+  const matches = matchesQuery.data ?? [];
+
+  const {
+    myMatches,
+    myFormStrip,
+    liveMatch,
+    liveCount,
+    todayCount,
+    memberCount,
+  } = useMemo(() => {
+    const my = selfId ? matches.filter((m) => selfSideOf(m, selfId) !== null) : [];
+    const finalsForMe = selfId
+      ? my.filter((m) => selfResultOf(m, selfId) !== null).slice(0, 5).map((m) => selfResultOf(m, selfId)!)
+      : [];
+    const anyLive = matches.find((m) => m.status !== "final");
+    const now = new Date();
+    return {
+      myMatches: my.slice(0, 3),
+      myFormStrip: finalsForMe,
+      liveMatch: anyLive,
+      liveCount: matches.filter((m) => m.status !== "final").length,
+      todayCount: matches.filter((m) => isSameDay(new Date(m.starts_at), now)).length,
+      memberCount: rosterQuery.data?.length ?? 0,
+    };
+  }, [matches, selfId, rosterQuery.data]);
+
+  const selfRoster = selfId ? rosterQuery.data?.find((r) => r.profile_id === selfId) : undefined;
+  const selfName = selfRoster
+    ? (preferNicknames && selfRoster.nickname) || selfRoster.full_name.split(" ")[0]
+    : profile?.fullName?.split(" ")[0] ?? "there";
+
+  function openNewMatch() {
+    setEntryMatchId(null);
+    setEntryOpen(true);
   }
 
-  const liveMatch = (matchesQuery.data ?? []).find((match) => match.status !== "final");
-  const activeBookings = data.bookings.filter((booking) => booking.status !== "cancelled").length;
-  const attendanceDue = data.attendance.reduce((sum, session) => sum + session.expectedCount - session.checkedInCount, 0);
-  const activePlayers = data.players.filter((player) => player.status === "active").length;
+  function openMatch(matchId: string) {
+    setEntryMatchId(matchId);
+    setEntryOpen(true);
+  }
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border bg-card p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl font-semibold tracking-normal">{data.club.name}</h2>
-              <Badge variant="secondary">{data.club.city}</Badge>
-            </div>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Courts, programs, match play, and club administration in one operating view.
-            </p>
+            <p className="text-sm text-muted-foreground">Welcome back</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">Hi, {selfName}</h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button>New booking</Button>
-            <Button variant="outline">Record score</Button>
-          </div>
+          <Button size="lg" onClick={openNewMatch} className="w-full sm:w-auto">
+            <Plus className="mr-2 h-4 w-4" />
+            Start a match
+          </Button>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricTile label="Courts active" value={`${data.courts.filter((court) => court.active).length}/${data.courts.length}`} detail="Hard, clay, and indoor inventory" icon={CalendarCheck2} tone="green" />
-        <MetricTile label="Bookings today" value={String(activeBookings)} detail="Confirmed, checked in, or complete" icon={Clock3} tone="blue" />
-        <MetricTile label="Players active" value={String(activePlayers)} detail={`${data.players.length} total player records`} icon={UsersRound} />
-        <MetricTile label="Attendance open" value={String(attendanceDue)} detail="Expected players not checked in" icon={Activity} tone="clay" />
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold">Court timeline</h3>
-              <p className="text-sm text-muted-foreground">Bookings and programs</p>
-            </div>
-            <Badge variant="outline">{format(new Date(), "EEE, MMM d")}</Badge>
+      {liveMatch ? (
+        <section className="grid gap-2">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Live now</h2>
           </div>
-          <div className="grid gap-3">
-            {data.bookings.map((booking) => (
-              <div key={booking.id} className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[120px_1fr_auto] sm:items-center">
-                <div className="text-sm font-medium">{format(new Date(booking.startsAt), "h:mm a")}</div>
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{booking.courtName} · {booking.players.join(", ")}</p>
-                  <p className="text-sm capitalize text-muted-foreground">{booking.purpose}</p>
-                </div>
-                <Badge variant={booking.status === "checked_in" ? "default" : "secondary"} className="w-fit capitalize">
-                  {booking.status.replace("_", " ")}
-                </Badge>
-              </div>
+          <MatchCard match={liveMatch} preferNicknames={preferNicknames} onOpen={openMatch} />
+        </section>
+      ) : null}
+
+      <section className="grid gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Your recent matches</h2>
+          {myFormStrip.length ? (
+            <div className="flex gap-1">
+              {myFormStrip.map((r, i) => (
+                <span
+                  key={i}
+                  className={
+                    "grid h-6 w-6 place-items-center rounded-full text-[11px] font-bold " +
+                    (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
+                  }
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        {matchesQuery.isLoading ? (
+          <Skeleton className="h-24 rounded-lg" />
+        ) : myMatches.length ? (
+          <div className="grid gap-2">
+            {myMatches.map((match) => (
+              <MatchCard key={match.match_id} match={match} preferNicknames={preferNicknames} onOpen={openMatch} />
             ))}
           </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Live match</h3>
+        ) : (
+          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+            Nothing yet — start a match above.
           </div>
-          {matchesQuery.isLoading ? (
-            <Skeleton className="h-24 rounded-lg" />
-          ) : liveMatch ? (
-            <MatchCard match={liveMatch} preferNicknames={preferNicknames} />
-          ) : (
-            <p className="text-sm text-muted-foreground">No match currently live.</p>
-          )}
+        )}
+      </section>
+
+      <section className="grid gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Club at a glance</h2>
+        <div className="grid grid-cols-3 gap-2">
+          <StatTile label="Members" value={memberCount} />
+          <StatTile label="Live" value={liveCount} />
+          <StatTile label="Today" value={todayCount} />
         </div>
       </section>
+
+      <ScoreEntry open={entryOpen} onOpenChange={setEntryOpen} matchId={entryMatchId} />
     </div>
   );
 }
+
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border bg-card p-3 text-center shadow-sm">
+      <p className="text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+

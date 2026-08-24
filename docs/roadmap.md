@@ -56,6 +56,18 @@ Ordered by rough priority. Each is a self-contained slice.
 - Cropper UI in profile self-edit; write result to `profiles.avatar_url`.
 - Until then, `set_member_avatar` accepts a pasted URL.
 
+## Nav plan
+
+Live nav is deliberately minimal: **Home · Scores · Admin**. Routes for the following pages still exist (direct URLs work) but are hidden from the sidebar and bottom bar until they carry real functionality:
+
+| Hidden page | Reintroduce when |
+|---|---|
+| `/players` | Stats slice ships (rating, form, opponent history). |
+| `/tournaments` | Seeding slice ships. |
+| `/bookings` | Court-booking backend exists. |
+| `/attendance` | Coaching-session backend exists. |
+| `/insights` | Club-level stats built on top of Stats. |
+
 ## Known housekeeping
 
 - **Migration files live in `supabase/manual/`** — Lovable's Supabase integration writes to `supabase/migrations/`. Next schema change goes in `migrations/`; the accumulated `manual/*.sql` are already applied on remote, safe to leave in place.
