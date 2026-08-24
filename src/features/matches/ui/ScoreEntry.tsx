@@ -66,7 +66,8 @@ function toDraftSets(sets: MatchSetRow[]): DraftSet[] {
 }
 
 export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
+  const isAdmin = role === "owner" || role === "admin";
   const rosterQuery = useClubRoster();
   const { preferNicknames } = useClubSettings();
   const matchesQuery = useRecentMatches(25);
@@ -263,6 +264,8 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const targetSets = setsToWin(bestOf);
   const canAddMoreSets = drafts.length < bestOf && !projectedWinner;
   const isFinal = activeStatus === "final";
+  const canEditFinal = isFinal && isAdmin;
+  const editable = !isFinal || canEditFinal;
   const hasAnyGames = tally.a + tally.b > 0 || (currentSet ? currentSet.side_a_games + currentSet.side_b_games > 0 : false);
 
   const disabledForPicker = pickerFor
@@ -273,7 +276,15 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="text-left">
-          <DrawerTitle>{phase === "setup" ? "New match" : isFinal ? "Match finalized" : "Score match"}</DrawerTitle>
+          <DrawerTitle>
+            {phase === "setup"
+              ? "New match"
+              : canEditFinal
+              ? "Edit finalized match"
+              : isFinal
+              ? "Match finalized"
+              : "Score match"}
+          </DrawerTitle>
         </DrawerHeader>
 
         <div className="grid gap-4 overflow-y-auto px-4 pb-2">
@@ -351,7 +362,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                     {set.tiebreak_a != null || set.tiebreak_b != null ? ` (${set.tiebreak_a ?? 0}–${set.tiebreak_b ?? 0})` : ""}
                   </button>
                 ))}
-                {!isFinal && !showTiebreakUI ? (
+                {editable && !showTiebreakUI ? (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -397,6 +408,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                 <span>Sets: {tally.a}–{tally.b} · first to {targetSets}</span>
                 <div className="flex items-center gap-2">
                   {isFinal ? <Badge variant="secondary">Finalized</Badge> : null}
+                  {canEditFinal ? <Badge variant="outline">Admin edit</Badge> : null}
                   {currentComplete ? <Badge variant="secondary">Set complete</Badge> : null}
                   {projectedWinner ? <Badge>Side {projectedWinner} wins</Badge> : null}
                 </div>
@@ -410,6 +422,17 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
             <Button onClick={handleStart} disabled={!setupValid || createMatch.isPending}>
               Start match
             </Button>
+          ) : canEditFinal ? (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+              <Button
+                className="ml-auto"
+                onClick={() => saveCurrentSet().then((ok) => ok && (toast.success("Set updated"), onOpenChange(false)))}
+                disabled={recordSet.isPending}
+              >
+                Save changes
+              </Button>
+            </div>
           ) : isFinal ? (
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
