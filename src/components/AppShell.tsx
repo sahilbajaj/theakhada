@@ -72,7 +72,7 @@ export function AppShell() {
               <Crown className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold">CourtSync Club</p>
+              <p className="truncate text-base font-semibold">The Akhada</p>
               <p className="text-sm text-muted-foreground">Tennis operations</p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export function AppShell() {
                       <Crown className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold">CourtSync Club</p>
+                      <p className="font-semibold">The Akhada</p>
                       <p className="text-sm text-muted-foreground">Tennis operations</p>
                     </div>
                   </div>

@@ -5,7 +5,7 @@
 - App path: `/Users/bajaj/theakhada`
 - Git remote: `git@github.com:sahilbajaj/theakhada.git`
 - Initial local commit: `2abb5a5 Initial tennis club app`
-- The app was moved out of `/Users/bajaj/mortgagelab-aiq/tennis-club-app`.
+- The app was moved into `/Users/bajaj/theakhada` as a standalone repository.
 - The app has its own Git repository and a clean working tree after the initial commit.
 - `node_modules/`, `dist/`, `.env`, and `.env.local` are ignored by the app repo.
 

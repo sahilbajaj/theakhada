@@ -11,9 +11,9 @@ function at(hour: number, minute = 0) {
 export const demoClubSnapshot: ClubSnapshot = {
   club: {
     id: "club-demo",
-    name: "CourtSync Tennis Club",
-    city: "Austin",
-    timezone: "America/Chicago",
+    name: "The Akhada Tennis Club",
+    city: "Bengaluru",
+    timezone: "Asia/Kolkata",
   },
   courts: [
     { id: "court-1", clubId: "club-demo", name: "Court 1", surface: "hard", indoor: false, active: true },

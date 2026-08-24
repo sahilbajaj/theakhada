@@ -40,4 +40,4 @@ Add the two `VITE_SUPABASE_*` variables in Amplify environment variables.
 
 ## Lovable
 
-Import the `tennis-club-app` folder. The project uses Vite, React, TypeScript, Tailwind, shadcn-style components, and the Lovable tagger in development mode.
+Import the `theakhada` folder. The project uses Vite, React, TypeScript, Tailwind, shadcn-style components, and the Lovable tagger in development mode.

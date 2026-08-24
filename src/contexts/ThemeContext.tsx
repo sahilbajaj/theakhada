@@ -8,7 +8,7 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-const STORAGE_KEY = "courtsync.theme";
+const STORAGE_KEY = "theakhada.theme";
 
 function readInitialMode(): ThemeMode {
   if (typeof window === "undefined") return "light";
