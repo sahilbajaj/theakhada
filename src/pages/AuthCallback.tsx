@@ -16,6 +16,11 @@ export default function AuthCallback() {
     if (isLoading || accessStatus === "loading") return;
     const next = searchParams.get("next") || "/";
     if (!session) {
+      const hasPendingOAuth =
+        window.location.hash.includes("access_token") ||
+        window.location.hash.includes("error") ||
+        searchParams.get("code");
+      if (hasPendingOAuth) return;
       navigate("/auth", { replace: true });
       return;
     }
