@@ -1,12 +1,36 @@
-import { Plus, Save } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useClubSnapshot } from "@/hooks/useClubData";
+import { useRecentMatches } from "@/features/matches/data/useMatches";
+import { MatchCard } from "@/features/matches/ui/MatchCard";
+import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
+import { useClubSettings } from "@/hooks/useClubSettings";
 
 export default function Scores() {
-  const { data } = useClubSnapshot();
+  const { preferNicknames } = useClubSettings();
+  const matchesQuery = useRecentMatches(50);
+  const [entryOpen, setEntryOpen] = useState(false);
+  const [entryMatchId, setEntryMatchId] = useState<string | null>(null);
+
+  const { live, recent } = useMemo(() => {
+    const rows = matchesQuery.data ?? [];
+    return {
+      live: rows.filter((m) => m.status !== "final"),
+      recent: rows.filter((m) => m.status === "final"),
+    };
+  }, [matchesQuery.data]);
+
+  function openNew() {
+    setEntryMatchId(null);
+    setEntryOpen(true);
+  }
+
+  function openExisting(matchId: string) {
+    setEntryMatchId(matchId);
+    setEntryOpen(true);
+  }
 
   return (
     <div className="grid gap-5">
@@ -14,51 +38,46 @@ export default function Scores() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Score keeping</h2>
-            <p className="text-sm text-muted-foreground">Capture singles, doubles, tie-breaks, and final results.</p>
+            <p className="text-sm text-muted-foreground">Anyone can start a match. Any set can be corrected later.</p>
           </div>
-          <Button><Plus className="mr-2 h-4 w-4" />New match</Button>
+          <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />New match</Button>
         </div>
       </section>
 
       <Tabs defaultValue="live">
         <TabsList>
-          <TabsTrigger value="live">Live</TabsTrigger>
-          <TabsTrigger value="recent">Recent</TabsTrigger>
-          <TabsTrigger value="entry">Quick entry</TabsTrigger>
+          <TabsTrigger value="live">Live ({live.length})</TabsTrigger>
+          <TabsTrigger value="recent">Recent ({recent.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="live" className="mt-4 grid gap-3">
-          {(data?.matches ?? []).map((match) => (
-            <div key={match.id} className="rounded-lg border bg-card p-4 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <Badge variant={match.status === "live" ? "default" : "secondary"} className="capitalize">{match.status}</Badge>
-                  <h3 className="mt-3 font-semibold">{match.home.join(" / ")} vs {match.away.join(" / ")}</h3>
-                  <p className="text-sm text-muted-foreground">{match.courtName} · {match.format}</p>
-                </div>
-                <div className="flex gap-2">
-                  {match.sets.length ? match.sets.map((set, index) => (
-                    <div key={`${match.id}-${index}`} className="min-w-16 rounded-md border px-3 py-2 text-center">
-                      <p className="text-xs text-muted-foreground">Set {index + 1}</p>
-                      <p className="font-semibold">{set.home}-{set.away}</p>
-                    </div>
-                  )) : <Badge variant="outline">Not started</Badge>}
-                </div>
-              </div>
+          {matchesQuery.isLoading ? (
+            <Skeleton className="h-24 rounded-lg" />
+          ) : live.length ? (
+            live.map((match) => (
+              <MatchCard key={match.match_id} match={match} preferNicknames={preferNicknames} onOpen={openExisting} />
+            ))
+          ) : (
+            <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+              No live matches. Tap “New match” to start one.
             </div>
-          ))}
+          )}
         </TabsContent>
-        <TabsContent value="recent" className="mt-4 rounded-lg border bg-card p-4 text-sm text-muted-foreground">
-          Finalized match history appears here once connected to Supabase.
-        </TabsContent>
-        <TabsContent value="entry" className="mt-4 rounded-lg border bg-card p-4 shadow-sm">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Input placeholder="Home player/team" />
-            <Input placeholder="Away player/team" />
-            <Input placeholder="Set score, e.g. 6-4 3-2" />
-            <Button><Save className="mr-2 h-4 w-4" />Save score</Button>
-          </div>
+        <TabsContent value="recent" className="mt-4 grid gap-3">
+          {matchesQuery.isLoading ? (
+            <Skeleton className="h-24 rounded-lg" />
+          ) : recent.length ? (
+            recent.map((match) => (
+              <MatchCard key={match.match_id} match={match} preferNicknames={preferNicknames} onOpen={openExisting} />
+            ))
+          ) : (
+            <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+              Finalized matches appear here.
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      <ScoreEntry open={entryOpen} onOpenChange={setEntryOpen} matchId={entryMatchId} />
     </div>
   );
 }

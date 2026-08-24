@@ -3,12 +3,16 @@ import { format } from "date-fns";
 import { MetricTile } from "@/components/MetricTile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRecentMatches } from "@/features/matches/data/useMatches";
+import { MatchCard } from "@/features/matches/ui/MatchCard";
+import { useClubSettings } from "@/hooks/useClubSettings";
 import { useClubSnapshot } from "@/hooks/useClubData";
 
 export default function Dashboard() {
   const { data, isLoading } = useClubSnapshot();
+  const matchesQuery = useRecentMatches(10);
+  const { preferNicknames } = useClubSettings();
 
   if (isLoading || !data) {
     return (
@@ -24,7 +28,7 @@ export default function Dashboard() {
     );
   }
 
-  const liveMatch = data.matches.find((match) => match.status === "live");
+  const liveMatch = (matchesQuery.data ?? []).find((match) => match.status !== "final");
   const activeBookings = data.bookings.filter((booking) => booking.status !== "cancelled").length;
   const attendanceDue = data.attendance.reduce((sum, session) => sum + session.expectedCount - session.checkedInCount, 0);
   const activePlayers = data.players.filter((player) => player.status === "active").length;
@@ -86,23 +90,10 @@ export default function Dashboard() {
             <Trophy className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">Live match</h3>
           </div>
-          {liveMatch ? (
-            <div className="grid gap-4">
-              <div>
-                <Badge>{liveMatch.courtName}</Badge>
-                <p className="mt-3 text-lg font-semibold">{liveMatch.home.join(" / ")} vs {liveMatch.away.join(" / ")}</p>
-                <p className="text-sm capitalize text-muted-foreground">{liveMatch.format}</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {liveMatch.sets.map((set, index) => (
-                  <div key={`${liveMatch.id}-${index}`} className="rounded-md border p-3 text-center">
-                    <p className="text-xs text-muted-foreground">Set {index + 1}</p>
-                    <p className="mt-1 text-xl font-semibold">{set.home}-{set.away}</p>
-                  </div>
-                ))}
-              </div>
-              <Progress value={68} />
-            </div>
+          {matchesQuery.isLoading ? (
+            <Skeleton className="h-24 rounded-lg" />
+          ) : liveMatch ? (
+            <MatchCard match={liveMatch} preferNicknames={preferNicknames} />
           ) : (
             <p className="text-sm text-muted-foreground">No match currently live.</p>
           )}
