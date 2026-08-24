@@ -146,8 +146,8 @@ begin
   sides as (
     select
       participants.match_id,
-      max(case when side = 'A' then roster end) as side_a,
-      max(case when side = 'B' then roster end) as side_b
+      (array_agg(roster) filter (where side = 'A'))[1] as side_a,
+      (array_agg(roster) filter (where side = 'B'))[1] as side_b
     from participants
     group by participants.match_id
   ),
