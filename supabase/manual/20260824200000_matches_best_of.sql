@@ -118,6 +118,7 @@ stable
 security definer
 set search_path = ''
 as $$
+#variable_conflict use_column
 declare
   v_club_id uuid := public.default_club_id();
 begin
@@ -144,11 +145,11 @@ begin
   ),
   sides as (
     select
-      match_id,
+      participants.match_id,
       max(case when side = 'A' then roster end) as side_a,
       max(case when side = 'B' then roster end) as side_b
     from participants
-    group by match_id
+    group by participants.match_id
   ),
   set_rows as (
     select
@@ -164,12 +165,12 @@ begin
         order by ms.set_index
       ) as sets,
       count(*) filter (
-        where side_a_games > side_b_games
-          or (side_a_games = side_b_games and coalesce(tiebreak_a, 0) > coalesce(tiebreak_b, 0))
+        where ms.side_a_games > ms.side_b_games
+          or (ms.side_a_games = ms.side_b_games and coalesce(ms.tiebreak_a, 0) > coalesce(ms.tiebreak_b, 0))
       ) as sets_a,
       count(*) filter (
-        where side_b_games > side_a_games
-          or (side_a_games = side_b_games and coalesce(tiebreak_b, 0) > coalesce(tiebreak_a, 0))
+        where ms.side_b_games > ms.side_a_games
+          or (ms.side_a_games = ms.side_b_games and coalesce(ms.tiebreak_b, 0) > coalesce(ms.tiebreak_a, 0))
       ) as sets_b
     from public.match_sets ms
     group by ms.match_id
