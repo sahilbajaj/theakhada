@@ -1,5 +1,8 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
+  BarChart3,
+  CalendarDays,
+  ClipboardCheck,
   Crown,
   LayoutDashboard,
   LogOut,
@@ -8,6 +11,8 @@ import {
   ShieldCheck,
   Sun,
   Swords,
+  Trophy,
+  UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,28 +28,54 @@ const primaryNav = [
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
 
+const comingSoonNav = [
+  { label: "Players", icon: UsersRound },
+  { label: "Tournaments", icon: Trophy },
+  { label: "Bookings", icon: CalendarDays },
+  { label: "Attendance", icon: ClipboardCheck },
+  { label: "Insights", icon: BarChart3 },
+];
+
 function NavItems({ compact = false }: { compact?: boolean }) {
   const { role } = useAuth();
   const isAdmin = role === "owner" || role === "admin";
 
   return (
-    <nav className={cn("grid gap-1", compact && "grid-cols-3")}>
-      {primaryNav.filter((item) => !item.adminOnly || isAdmin).map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === "/"}
-          className={({ isActive }) => cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-            isActive && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-            compact && "h-14 flex-col justify-center gap-1 px-1 py-1 text-[11px]",
-          )}
-        >
-          <item.icon className={cn("h-4 w-4", compact && "h-5 w-5")} />
-          <span className="truncate">{item.label}</span>
-        </NavLink>
-      ))}
-    </nav>
+    <div className={cn("grid gap-4", compact && "gap-0")}>
+      <nav className={cn("grid gap-1", compact && "grid-cols-3")}>
+        {primaryNav.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) => cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              isActive && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+              compact && "h-14 flex-col justify-center gap-1 px-1 py-1 text-[11px]",
+            )}
+          >
+            <item.icon className={cn("h-4 w-4", compact && "h-5 w-5")} />
+            <span className="truncate">{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+      {compact ? null : (
+        <div className="grid gap-1">
+          <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Coming soon</p>
+          {comingSoonNav.map((item) => (
+            <div
+              key={item.label}
+              aria-disabled
+              className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground/60"
+            >
+              <item.icon className="h-4 w-4" />
+              <span className="truncate">{item.label}</span>
+              <Badge variant="outline" className="ml-auto text-[10px]">Soon</Badge>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
