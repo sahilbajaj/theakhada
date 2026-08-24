@@ -10,6 +10,12 @@ Snapshot of what's shipped, what's paused, and what comes next. Update as slices
 - Admin RPCs: `set_member_role`, `set_member_rating`, `set_member_nickname`, `set_member_avatar`, `set_club_prefer_nicknames`.
 - Admin page: members list with avatar + name + rating + role, inline edit dialog for nickname/rating/avatar URL, prefer-nicknames toggle.
 
+### Notifications v1
+- Table `notifications` (RLS: own rows only) + trigger `match_events_fan_out` inserting one row per participant when a `match_created`, `match_finalized`, or `match_reopened` event lands (set-level events don't fan out to keep noise down).
+- RPCs: `list_notifications`, `unread_notifications_count`, `mark_notification_read`, `mark_all_notifications_read`.
+- Bell in `AppShell` top bar with unread badge, dropdown with 5 recent items, "See all" opens a right-side Sheet with card-per-item feed. Tapping a card opens the underlying match in `ScoreEntry` and marks the notification read.
+- `src/features/notifications/{types, data, logic, ui}`.
+
 ### Match v1
 - Tables: `match_participants`, `match_sets`, `match_events`. Legacy `matches.home_players` / `.away_players` / `.sets` columns are unused by new code but not yet dropped.
 - `matches.best_of` (1 / 3 / 5) chosen at match creation.
@@ -39,12 +45,6 @@ Ordered by rough priority. Each is a self-contained slice.
 - Edit trail on cards: small "edited by X · 12m ago" pill sourced from `match_events`.
 - Delete match: admin-only `delete_match(id)` RPC + confirm dialog.
 - Admin lock/unlock finalized matches (prevent reopen after N hours).
-
-### Notifications
-- Tables: `notifications(id, profile_id, kind, subject_id, payload, created_at, read_at)`. Trigger on `match_events` insert fans out one row per affected profile (participants, and later tournament co-entrants).
-- Bell icon in `AppShell` top bar with unread badge. Tap → dropdown of last 5.
-- Tap any item → full-screen swipable Sheet (vertical Embla carousel already available).
-- Card variants: match result, stat milestone, admin (invite / access request).
 
 ### Seeding & tournaments v1
 - Compute: `rating * 0.6 + last_10_win_pct * 0.3 + recency * 0.1`.

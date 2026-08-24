@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { NotificationBell } from "@/features/notifications/ui/NotificationBell";
 import { cn } from "@/lib/utils";
 
 const primaryNav = [
@@ -122,6 +123,7 @@ export function AppShell() {
                   {profile.fullName} · {role}
                 </Badge>
               ) : null}
+              {!demoMode ? <NotificationBell /> : null}
               <Button
                 variant="outline"
                 size="icon"
