@@ -210,6 +210,7 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
         </Select>
       )}
       <MemberEditDialog member={member} />
+    </div>
   );
 }
 
