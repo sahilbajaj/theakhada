@@ -1,4 +1,4 @@
-# CourtSync Club
+# The Akhada
 
 A tennis club app scaffolded from the MortgageLab AIQ frontend patterns. It is ready for Lovable import, local Vite development, AWS Amplify static hosting, and Supabase-backed data.
 
