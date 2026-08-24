@@ -28,7 +28,6 @@ export default defineConfig(({ mode }) => ({
           }
           if (id.includes("@tanstack/react-query")) return "query-vendor";
           if (id.includes("@supabase/")) return "supabase-vendor";
-          if (id.includes("recharts")) return "charts-vendor";
           if (id.includes("date-fns") || id.includes("react-day-picker")) return "date-vendor";
           return undefined;
         },
