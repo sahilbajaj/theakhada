@@ -180,6 +180,16 @@ export default function Admin() {
     },
   });
 
+  const membersQuery = useQuery({
+    queryKey: ["club-members"],
+    enabled: isAdmin && Boolean(supabase),
+    queryFn: async (): Promise<ClubMember[]> => {
+      const { data, error } = await supabase!.rpc("list_club_members" as never);
+      if (error) throw error;
+      return (data as ClubMember[] | null) ?? [];
+    },
+  });
+
   const invitesQuery = useQuery({
     queryKey: ["club-invites"],
     enabled: isAdmin && Boolean(supabase),
@@ -228,6 +238,20 @@ export default function Admin() {
         ) : (
           <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
             {requestsQuery.isLoading ? "Loading requests..." : "No pending access requests."}
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Members</h2>
+          <p className="text-sm text-muted-foreground">Change roles for existing members. The owner role is locked.</p>
+        </div>
+        {(membersQuery.data ?? []).length ? (
+          membersQuery.data?.map((member) => <MemberRoleRow key={member.profile_id} member={member} />)
+        ) : (
+          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+            {membersQuery.isLoading ? "Loading members..." : "No members yet."}
           </div>
         )}
       </section>
