@@ -28,6 +28,16 @@ Apply the schema in `supabase/migrations/202608240001_initial_tennis_club_schema
 
 Optional seed data lives in `supabase/seed.sql`.
 
+### Auth
+
+The app supports Magic Link and Google login through Supabase Auth. Configure Supabase Auth URL settings with the deployed Amplify URL as the Site URL and add redirect URLs for:
+
+- `/auth/callback`
+- `/accept-invite`
+- local development equivalents on `http://localhost:8080`
+
+For Google login, enable the Google provider in Supabase and add the Supabase Auth callback URL to the Google OAuth client redirect URIs.
+
 ## AWS Amplify
 
 This repo includes `amplify.yml` for Amplify Hosting:

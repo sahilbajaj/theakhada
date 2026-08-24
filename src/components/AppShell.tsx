@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   Crown,
   LayoutDashboard,
+  LogOut,
   Menu,
   Moon,
   ShieldCheck,
@@ -27,14 +28,17 @@ const primaryNav = [
   { to: "/attendance", label: "Attendance", icon: ClipboardCheck },
   { to: "/tournaments", label: "Tournaments", icon: Trophy },
   { to: "/players", label: "Players", icon: UsersRound },
-  { to: "/admin", label: "Admin", icon: ShieldCheck },
+  { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
   { to: "/insights", label: "Stats", icon: BarChart3 },
 ];
 
 function NavItems({ compact = false }: { compact?: boolean }) {
+  const { role } = useAuth();
+  const isAdmin = role === "owner" || role === "admin";
+
   return (
     <nav className={cn("grid gap-1", compact && "grid-cols-4")}>
-      {primaryNav.map((item) => (
+      {primaryNav.filter((item) => !item.adminOnly || isAdmin).map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
@@ -59,7 +63,7 @@ function pageTitle(pathname: string) {
 }
 
 export function AppShell() {
-  const { demoMode, isLoading } = useAuth();
+  const { demoMode, isLoading, profile, role, signOut } = useAuth();
   const { mode, setMode } = useTheme();
   const location = useLocation();
 
@@ -123,6 +127,11 @@ export function AppShell() {
             </div>
             <div className="flex items-center gap-2">
               {isLoading ? <Badge variant="outline">Syncing</Badge> : null}
+              {profile ? (
+                <Badge variant="outline" className="hidden max-w-[220px] truncate capitalize sm:inline-flex">
+                  {profile.fullName} · {role}
+                </Badge>
+              ) : null}
               <Button
                 variant="outline"
                 size="icon"
@@ -131,6 +140,11 @@ export function AppShell() {
               >
                 {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
+              {!demoMode ? (
+                <Button variant="outline" size="icon" aria-label="Sign out" onClick={() => void signOut()}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              ) : null}
             </div>
           </div>
         </header>

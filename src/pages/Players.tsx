@@ -1,12 +1,15 @@
-import { Search, UserPlus } from "lucide-react";
+import { Search } from "lucide-react";
+import { InviteDialog } from "@/components/InviteDialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
 import { useClubSnapshot } from "@/hooks/useClubData";
 
 export default function Players() {
   const { data } = useClubSnapshot();
+  const { role } = useAuth();
+  const isAdmin = role === "owner" || role === "admin";
 
   return (
     <div className="grid gap-4">
@@ -20,7 +23,7 @@ export default function Players() {
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="Search players" />
           </div>
-          <Button><UserPlus className="mr-2 h-4 w-4" />Invite</Button>
+          {isAdmin ? <InviteDialog /> : null}
         </div>
       </section>
 
