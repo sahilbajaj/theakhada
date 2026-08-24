@@ -28,7 +28,7 @@ export function OpponentPicker({ candidates, selectedIds, onToggle, preferNickna
             return (
               <CommandItem
                 key={member.profile_id}
-                value={`${name} ${member.full_name}`}
+                value={`${name} ${member.full_name} ${member.profile_id}`}
                 disabled={disabled}
                 onSelect={() => !disabled && onToggle(member.profile_id)}
                 className="flex items-center gap-3"
