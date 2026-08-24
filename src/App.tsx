@@ -8,6 +8,7 @@ import Scores from "@/pages/Scores";
 import Attendance from "@/pages/Attendance";
 import Tournaments from "@/pages/Tournaments";
 import Players from "@/pages/Players";
+import PlayerDetail from "@/pages/PlayerDetail";
 import Admin from "@/pages/Admin";
 import Insights from "@/pages/Insights";
 import Auth from "@/pages/Auth";
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/tournaments" element={<Tournaments />} />
           <Route path="/players" element={<Players />} />
+          <Route path="/players/:profileId" element={<PlayerDetail />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="*" element={<Navigate to="/" replace />} />

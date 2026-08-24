@@ -10,6 +10,11 @@ Snapshot of what's shipped, what's paused, and what comes next. Update as slices
 - Admin RPCs: `set_member_role`, `set_member_rating`, `set_member_nickname`, `set_member_avatar`, `set_club_prefer_nicknames`.
 - Admin page: members list with avatar + name + rating + role, inline edit dialog for nickname/rating/avatar URL, prefer-nicknames toggle.
 
+### Stats v1
+- `/players` is now the real roster: search, sorted by rating, per-row form strip and W-L.
+- `/players/:profileId` profile page with month W-L / win rate, form strip (last 10), most-played opponents (linked), recent-matches list.
+- Pure `computeStats(matches, profileId, now)` in `src/features/stats/logic/computeStats.ts`. Client-side derivation from `list_recent_matches`; no new SQL. Trends/ratings-over-time and best-win are deferred until we track rating history.
+
 ### Notifications v1
 - Table `notifications` (RLS: own rows only) + trigger `match_events_fan_out` inserting one row per participant when a `match_created`, `match_finalized`, or `match_reopened` event lands (set-level events don't fan out to keep noise down).
 - RPCs: `list_notifications`, `unread_notifications_count`, `mark_notification_read`, `mark_all_notifications_read`.
@@ -28,12 +33,11 @@ Snapshot of what's shipped, what's paused, and what comes next. Update as slices
 
 Ordered by rough priority. Each is a self-contained slice.
 
-### Stats overview (player page)
-- Route: `/players/:profile_id`. Tabs: Overview / Matches / Trends.
-- Overview: current rating, W-L this month, current streak, most-frequent opponent, favorite court.
-- Matches tab: reverse-chron list built on `list_recent_matches` filtered by participant.
-- Data: derive from `match_participants` + `match_sets` + `match_events`; a Postgres view `profile_match_summary` keeps queries cheap.
-- Trends tab is stretch — sparkline of rating over time, singles vs doubles split.
+### Stats trends (stretch)
+- Rating over time (needs a rating-history table — not built yet).
+- Best-win by opponent rating.
+- Singles vs doubles split.
+- Move `computeStats` to a materialized view / `list_profile_stats` RPC once the roster grows large enough that client-side derivation feels slow.
 
 ### Profile self-edit
 - Player edits own nickname, avatar URL (upload flow later — see below).
@@ -62,7 +66,6 @@ Live nav is deliberately minimal: **Home · Scores · Admin**. Routes for the fo
 
 | Hidden page | Reintroduce when |
 |---|---|
-| `/players` | Stats slice ships (rating, form, opponent history). |
 | `/tournaments` | Seeding slice ships. |
 | `/bookings` | Court-booking backend exists. |
 | `/attendance` | Coaching-session backend exists. |
