@@ -14,6 +14,8 @@ import Admin from "@/pages/Admin";
 import Insights from "@/pages/Insights";
 import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/accept-invite" element={<AcceptInvite />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route element={<AccessGate />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<Dashboard />} />

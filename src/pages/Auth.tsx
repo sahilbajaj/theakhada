@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { ArrowRight, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,6 +117,13 @@ export default function Auth() {
             </TabsContent>
           </Tabs>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground">
+          By signing in you agree to our{" "}
+          <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">Terms</Link>
+          {" "}and{" "}
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">Privacy Policy</Link>.
+        </p>
       </section>
     </main>
   );
