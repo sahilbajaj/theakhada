@@ -104,6 +104,7 @@ export default function PlayerDetail() {
             <h2 className="truncate text-2xl font-semibold">{primary}</h2>
             {formal !== primary ? <p className="truncate text-sm text-muted-foreground">{formal}</p> : null}
             <div className="mt-1 flex items-center gap-2">
+              {member.seed != null ? <Badge>Seed #{member.seed}</Badge> : null}
               <Badge variant="outline">Rating {member.rating != null ? member.rating.toFixed(1) : "—"}</Badge>
               {stats.currentStreak ? (
                 <Badge variant={stats.currentStreak.kind === "W" ? "default" : "secondary"}>

@@ -10,6 +10,13 @@ Snapshot of what's shipped, what's paused, and what comes next. Update as slices
 - Admin RPCs: `set_member_role`, `set_member_rating`, `set_member_nickname`, `set_member_avatar`, `set_club_prefer_nicknames`.
 - Admin page: members list with avatar + name + rating + role, inline edit dialog for nickname/rating/avatar URL, prefer-nicknames toggle.
 
+### Seeding v1 (club-level)
+- Whole-list admin RPCs `set_all_seeds(uuid[])` and `clear_all_seeds()`; storage on `profiles.seed`.
+- `/seeding` route (admin action buttons hidden for non-admins) with drag-and-drop reorder via `@dnd-kit/sortable`.
+- Suggested order in `src/features/seeding/logic/computeSuggested.ts` blends `rating × 0.6 + last-10 win rate × 0.3 + recency × 0.1`.
+- Seed badges surface on `/players` rows and `/players/:id` header. `useClubRoster` now returns `seed`.
+- Per-tournament seedings still deferred until tournament CRUD exists.
+
 ### Stats v1
 - `/players` is now the real roster: search, sorted by rating, per-row form strip and W-L.
 - `/players/:profileId` profile page with month W-L / win rate, form strip (last 10), most-played opponents (linked), recent-matches list.
@@ -49,11 +56,6 @@ Ordered by rough priority. Each is a self-contained slice.
 - Edit trail on cards: small "edited by X · 12m ago" pill sourced from `match_events`.
 - Delete match: admin-only `delete_match(id)` RPC + confirm dialog.
 - Admin lock/unlock finalized matches (prevent reopen after N hours).
-
-### Seeding & tournaments v1
-- Compute: `rating * 0.6 + last_10_win_pct * 0.3 + recency * 0.1`.
-- New table: `tournament_seeds(tournament_id, profile_id, seed, source enum('auto','manual'))`.
-- Admin page `/tournaments/:id/seed` shows auto rank with drag-reorder (adds `@dnd-kit/sortable` dep). "Publish seeds" freezes into a bracket.
 
 ### Avatar upload
 - Supabase Storage bucket `avatars`. Signed upload URLs from a small RPC.

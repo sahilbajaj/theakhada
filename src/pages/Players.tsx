@@ -34,7 +34,14 @@ export default function Players() {
         member,
         stats: computeStats(matches, member.profile_id),
       }))
-      .sort((a, b) => (b.member.rating ?? 0) - (a.member.rating ?? 0));
+      .sort((a, b) => {
+        const sa = a.member.seed;
+        const sb = b.member.seed;
+        if (sa != null && sb != null) return sa - sb;
+        if (sa != null) return -1;
+        if (sb != null) return 1;
+        return (b.member.rating ?? 0) - (a.member.rating ?? 0);
+      });
   }, [rosterQuery.data, matchesQuery.data, query]);
 
   return (
@@ -75,8 +82,11 @@ export default function Players() {
               <Link
                 key={member.profile_id}
                 to={`/players/${member.profile_id}`}
-                className="grid gap-3 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center"
+                className="grid gap-3 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-center"
               >
+                <Badge variant={member.seed != null ? "default" : "outline"} className="w-9 justify-center tabular-nums">
+                  {member.seed != null ? `#${member.seed}` : "—"}
+                </Badge>
                 <Avatar>
                   {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
                   <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
