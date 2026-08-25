@@ -82,39 +82,52 @@ export default function Players() {
               <Link
                 key={member.profile_id}
                 to={`/players/${member.profile_id}`}
-                className="grid gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card transition hover:border-primary/40 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-center"
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card transition hover:border-primary/40 hover:shadow-card-hover"
               >
-                <Badge variant={member.seed != null ? "default" : "outline"} className="w-9 justify-center tabular-nums">
+                <Badge variant={member.seed != null ? "default" : "outline"} className="w-9 shrink-0 justify-center tabular-nums">
                   {member.seed != null ? `#${member.seed}` : "—"}
                 </Badge>
-                <Avatar>
+                <Avatar className="h-9 w-9 shrink-0">
                   {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
                   <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
                 </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {stats.totalPlayed
                       ? `${stats.totalWins}-${stats.totalLosses} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"}`
                       : "No matches yet"}
                   </p>
                 </div>
-                <div className="flex gap-1">
-                  {stats.form.slice(0, 5).map((r, i) => (
-                    <span
-                      key={i}
-                      className={
-                        "grid h-6 w-6 place-items-center rounded-full text-[11px] font-bold " +
-                        (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
-                      }
-                    >
-                      {r}
-                    </span>
-                  ))}
+                <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {stats.form.slice(0, 3).map((r, i) => (
+                      <span
+                        key={i}
+                        className={
+                          "grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold " +
+                          (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
+                        }
+                      >
+                        {r}
+                      </span>
+                    ))}
+                    {stats.form.slice(3, 5).map((r, i) => (
+                      <span
+                        key={i + 3}
+                        className={
+                          "hidden h-5 w-5 place-items-center rounded-full text-[10px] font-bold sm:grid " +
+                          (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
+                        }
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                  <Badge variant="outline" className="tabular-nums">
+                    {member.rating != null ? member.rating.toFixed(1) : "—"}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="w-fit sm:justify-self-end">
-                  {member.rating != null ? member.rating.toFixed(1) : "—"}
-                </Badge>
               </Link>
             );
           })}

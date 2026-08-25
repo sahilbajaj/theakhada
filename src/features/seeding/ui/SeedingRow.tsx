@@ -33,7 +33,7 @@ export const SeedingRow = forwardRef<HTMLDivElement, Props>(function SeedingRow(
       ref={sortable.setNodeRef}
       style={style}
       className={
-        "grid items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card sm:grid-cols-[auto_auto_auto_1fr_auto_auto] " +
+        "flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card " +
         (sortable.isDragging ? "opacity-70 ring-2 ring-primary/40" : "")
       }
     >
@@ -42,36 +42,36 @@ export const SeedingRow = forwardRef<HTMLDivElement, Props>(function SeedingRow(
           type="button"
           {...sortable.attributes}
           {...sortable.listeners}
-          className="grid h-9 w-8 place-items-center rounded-md text-muted-foreground hover:bg-accent"
+          className="grid h-9 w-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
           aria-label="Drag to reorder"
         >
           <GripVertical className="h-4 w-4" />
         </button>
       ) : (
-        <div className="w-8" />
+        <div className="w-8 shrink-0" />
       )}
-      <Badge className="w-9 justify-center tabular-nums">#{currentSeed}</Badge>
-      <Avatar className="h-9 w-9">
+      <Badge className="w-9 shrink-0 justify-center tabular-nums">#{currentSeed}</Badge>
+      <Avatar className="h-9 w-9 shrink-0">
         {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
         <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
       </Avatar>
-      <div className="min-w-0">
-        <p className="truncate font-medium">{name}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{name}</p>
         <p className="truncate text-xs text-muted-foreground">
           Rating {member.rating != null ? member.rating.toFixed(1) : "—"}
           {suggestionDiffers ? ` · suggested #${suggestedSeed}` : ""}
         </p>
       </div>
-      <Badge variant="outline" className="hidden w-14 justify-center tabular-nums sm:inline-flex">
-        {member.rating != null ? member.rating.toFixed(1) : "—"}
-      </Badge>
-      {suggestionDiffers ? (
-        <Badge variant="secondary" className="text-[10px]">
-          was #{member.seed ?? "—"}
+      <div className="flex shrink-0 items-center gap-2">
+        {suggestionDiffers ? (
+          <Badge variant="secondary" className="text-[10px]">
+            was #{member.seed ?? "—"}
+          </Badge>
+        ) : null}
+        <Badge variant="outline" className="hidden w-14 justify-center tabular-nums sm:inline-flex">
+          {member.rating != null ? member.rating.toFixed(1) : "—"}
         </Badge>
-      ) : (
-        <span />
-      )}
+      </div>
     </div>
   );
 });
