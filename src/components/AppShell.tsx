@@ -24,7 +24,7 @@ import { NotificationBell } from "@/features/notifications/ui/NotificationBell";
 import { cn } from "@/lib/utils";
 
 const primaryNav = [
-  { to: "/", label: "Home", icon: LayoutDashboard },
+  { to: "/app", label: "Home", icon: LayoutDashboard },
   { to: "/scores", label: "Scores", icon: Swords },
   { to: "/players", label: "Players", icon: UsersRound },
   { to: "/seeding", label: "Seeding", icon: ListOrdered, adminOnly: true },
@@ -49,7 +49,7 @@ function NavItems({ compact = false }: { compact?: boolean }) {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === "/"}
+            end={item.to === "/app"}
             className={({ isActive }) => cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
               isActive && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",

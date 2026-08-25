@@ -14,7 +14,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     if (isLoading || accessStatus === "loading") return;
-    const next = searchParams.get("next") || "/";
+    const next = searchParams.get("next") || "/app";
     if (!session) {
       const hasPendingOAuth =
         window.location.hash.includes("access_token") ||
@@ -24,7 +24,7 @@ export default function AuthCallback() {
       navigate("/auth", { replace: true });
       return;
     }
-    navigate(accessStatus === "approved" ? next : "/", { replace: true });
+    navigate(accessStatus === "approved" ? next : "/app", { replace: true });
   }, [accessStatus, isLoading, navigate, searchParams, session]);
 
   return (

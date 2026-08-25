@@ -22,7 +22,7 @@ export default function Auth() {
   const location = useLocation();
   const from = typeof location.state === "object" && location.state && "from" in location.state
     ? String(location.state.from)
-    : "/";
+    : "/app";
   const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(from)}`;
   const [email, setEmail] = useState("");
   const [requestEmail, setRequestEmail] = useState("");

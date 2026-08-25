@@ -14,12 +14,14 @@ import Admin from "@/pages/Admin";
 import Insights from "@/pages/Insights";
 import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
+import Landing from "@/pages/Landing";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/accept-invite" element={<AcceptInvite />} />
@@ -27,7 +29,7 @@ export default function App() {
       <Route path="/terms" element={<Terms />} />
       <Route element={<AccessGate />}>
         <Route element={<AppShell />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/app" element={<Dashboard />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/scores" element={<Scores />} />
           <Route path="/attendance" element={<Attendance />} />
@@ -37,7 +39,7 @@ export default function App() {
           <Route path="/seeding" element={<Seeding />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/insights" element={<Insights />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>
       </Route>
     </Routes>

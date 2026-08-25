@@ -19,7 +19,7 @@ export default function AcceptInvite() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!token) return <Navigate to="/auth" replace />;
-  if (accessStatus === "approved") return <Navigate to="/" replace />;
+  if (accessStatus === "approved") return <Navigate to="/app" replace />;
 
   async function submitMagicLink(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +45,7 @@ export default function AcceptInvite() {
       if (error) throw error;
       await refreshAccess();
       toast.success("Invite accepted");
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     } catch (error) {
       toast.error("Could not accept invite", { description: error instanceof Error ? error.message : "Try again." });
     } finally {
