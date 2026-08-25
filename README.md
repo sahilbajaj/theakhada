@@ -2,6 +2,13 @@
 
 A tennis club app scaffolded from the MortgageLab AIQ frontend patterns. It is ready for Lovable import, local Vite development, AWS Amplify static hosting, and Supabase-backed data.
 
+## Development Docs
+
+- [Architecture](docs/architecture.md)
+- [Frontend Guidelines](docs/frontend-guidelines.md)
+- [Auth and Access](docs/auth-access.md)
+- [Supabase Development](docs/supabase-development.md)
+
 ## Run Locally
 
 ```bash
@@ -24,7 +31,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 
 ## Supabase
 
-Apply the schema in `supabase/migrations/202608240001_initial_tennis_club_schema.sql`.
+Apply the schema migrations in `supabase/migrations`.
 
 Optional seed data lives in `supabase/seed.sql`.
 
@@ -37,6 +44,8 @@ The app supports Magic Link and Google login through Supabase Auth. Configure Su
 - local development equivalents on `http://localhost:8080`
 
 For Google login, enable the Google provider in Supabase and add the Supabase Auth callback URL to the Google OAuth client redirect URIs.
+
+The access model, RPCs, and redirect requirements are documented in [Auth and Access](docs/auth-access.md).
 
 ## AWS Amplify
 

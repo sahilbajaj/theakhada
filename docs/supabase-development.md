@@ -11,11 +11,56 @@ Do not commit `.env` or `.env.local`.
 
 ## Migration Workflow
 
-- Add schema changes as new files under `supabase/migrations`.
-- Prefer migrations plus RPCs over ad hoc dashboard edits.
-- Apply DDL through migrations.
-- After schema changes, regenerate `src/integrations/supabase/types.ts` when tooling is available.
-- Run Supabase security and performance advisors after applying migrations.
+**All schema changes go in `supabase/migrations/`.** Local CLI, Lovable's Supabase integration, and Amplify all agree on this folder. The old `supabase/manual/` folder is retired — every file was moved here and its history repaired.
+
+### Filename convention
+
+`YYYYMMDDhhmmss_short_description.sql`. Timestamp is significant: it drives ordering and matches rows in `supabase_migrations.schema_migrations`.
+
+### Local apply (Supabase CLI)
+
+```
+supabase migration list          # local vs remote sync
+supabase db push --dry-run       # preview
+supabase db push                 # apply pending files
+```
+
+CLI is already linked to project `fiizcmvfikslxiykrzls`. From a fresh machine:
+
+```
+brew install supabase/tap/supabase       # or download the release binary
+supabase login
+supabase link --project-ref fiizcmvfikslxiykrzls
+```
+
+### Lovable apply
+
+Lovable's connected Supabase integration writes into `supabase/migrations/` and applies on save. Because the folder is shared, running `supabase migration list` after pulling a Lovable commit may show a new file as local-only. If Lovable already ran it against the DB, mark it applied instead of pushing again:
+
+```
+supabase migration repair --status applied <timestamp>
+```
+
+### Rules
+
+- Never paste DDL directly in the dashboard SQL editor. Dashboard runs don't leave a repo trail and cause the history drift we just fixed.
+- Never edit a migration file after it's been pushed. Write a new file instead.
+
+### If history drifts
+
+Symptom: `supabase migration list` shows local-only or remote-only rows.
+
+```
+supabase migration repair --status applied  <local_ts>     # local file already on remote
+supabase migration repair --status reverted <remote_ts>    # remote entry has no local file
+```
+
+Re-run `supabase migration list` to confirm every row is paired.
+
+### After schema changes
+
+- Regenerate `src/integrations/supabase/types.ts` when tooling is available.
+- Run the Supabase security and performance advisors.
 
 ## Existing Migrations
 
