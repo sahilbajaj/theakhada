@@ -66,8 +66,19 @@ export default function Auth() {
       setAccessRequestedFor(requestEmail);
       setRequestEmail("");
       setFullName("");
-    } catch (error) {
-      toast.error("Could not request access", { description: error instanceof Error ? error.message : "Try again." });
+    } catch (err) {
+      const msg =
+        err && typeof err === "object"
+          ? [
+              (err as { message?: string }).message,
+              (err as { details?: string }).details,
+              (err as { hint?: string }).hint,
+              (err as { code?: string }).code ? `code ${(err as { code?: string }).code}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : String(err);
+      toast.error("Could not request access", { description: msg || "Try again." });
     } finally {
       setIsSubmitting(false);
     }
