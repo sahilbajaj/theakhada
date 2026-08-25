@@ -63,7 +63,10 @@ export default function Seeding() {
     setBaseline(next);
   }, [roster, suggestion]);
 
-  const dirty = order.length && (order.length !== baseline.length || order.some((id, i) => baseline[i] !== id));
+  const anyUnseeded = roster.some((m) => m.seed == null);
+  const dirty =
+    order.length > 0 &&
+    (anyUnseeded || order.length !== baseline.length || order.some((id, i) => baseline[i] !== id));
 
   function handleRecompute() {
     setOrder(suggestion);
@@ -95,7 +98,10 @@ export default function Seeding() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Seeding</h2>
-            <p className="text-sm text-muted-foreground">Club ranking. Drag to reorder; the suggestion blends rating, recent form, and how recently people played.</p>
+            <p className="text-sm text-muted-foreground">Seeds recompute automatically as matches finalize (rating + recent form + recency). Drag and Save to override until the next match settles.</p>
+            {isAdmin && anyUnseeded ? (
+              <p className="mt-1 text-xs text-muted-foreground">No seeds yet — hit Save to publish the suggested order.</p>
+            ) : null}
           </div>
           {isAdmin ? (
             <div className="flex flex-wrap gap-2">

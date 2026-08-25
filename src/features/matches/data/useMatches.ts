@@ -53,6 +53,7 @@ export function useReopenMatch() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: MATCHES_KEY });
+      await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
     },
   });
 }
@@ -95,6 +96,7 @@ export function useFinalizeMatch() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: MATCHES_KEY });
+      await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
     },
   });
 }
