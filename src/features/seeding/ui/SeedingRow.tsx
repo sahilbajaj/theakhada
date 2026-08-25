@@ -33,7 +33,7 @@ export const SeedingRow = forwardRef<HTMLDivElement, Props>(function SeedingRow(
       ref={sortable.setNodeRef}
       style={style}
       className={
-        "grid items-center gap-3 rounded-lg border bg-card p-3 shadow-sm sm:grid-cols-[auto_auto_auto_1fr_auto_auto] " +
+        "grid items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card sm:grid-cols-[auto_auto_auto_1fr_auto_auto] " +
         (sortable.isDragging ? "opacity-70 ring-2 ring-primary/40" : "")
       }
     >

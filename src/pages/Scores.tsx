@@ -34,7 +34,7 @@ export default function Scores() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Score keeping</h2>
@@ -57,7 +57,7 @@ export default function Scores() {
               <MatchCard key={match.match_id} match={match} preferNicknames={preferNicknames} onOpen={openExisting} />
             ))
           ) : (
-            <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+            <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
               No live matches. Tap “New match” to start one.
             </div>
           )}
@@ -70,7 +70,7 @@ export default function Scores() {
               <MatchCard key={match.match_id} match={match} preferNicknames={preferNicknames} onOpen={openExisting} />
             ))
           ) : (
-            <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+            <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
               Finalized matches appear here.
             </div>
           )}

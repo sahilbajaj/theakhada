@@ -63,7 +63,7 @@ export function MatchCard({ match, preferNicknames, onOpen }: Props) {
     <button
       type="button"
       onClick={() => onOpen?.(match.match_id)}
-      className="grid w-full gap-3 rounded-lg border bg-card p-4 text-left shadow-sm transition hover:border-primary/40"
+      className="grid w-full gap-3 rounded-xl border border-border/60 bg-card p-4 text-left shadow-card transition hover:border-primary/40"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">

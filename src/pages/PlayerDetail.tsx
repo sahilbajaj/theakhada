@@ -16,7 +16,7 @@ import { initialsFrom } from "@/lib/initials";
 
 function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-3 text-center shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-card">
       <p className="text-xl font-semibold tabular-nums">{value}</p>
       <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
       {sub ? <p className="text-[11px] text-muted-foreground">{sub}</p> : null}
@@ -67,7 +67,7 @@ export default function PlayerDetail() {
         <Link to="/players" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> Back to players
         </Link>
-        <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
           Player not found.
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function PlayerDetail() {
         <ChevronLeft className="h-4 w-4" /> Back to players
       </Link>
 
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={primary} /> : null}
@@ -137,7 +137,7 @@ export default function PlayerDetail() {
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border bg-card p-3 text-sm text-muted-foreground shadow-sm">No matches finalized yet.</div>
+          <div className="rounded-xl border border-border/60 bg-card p-3 text-sm text-muted-foreground shadow-card">No matches finalized yet.</div>
         )}
       </section>
 
@@ -154,7 +154,7 @@ export default function PlayerDetail() {
                 <Link
                   key={opp.profile_id}
                   to={`/players/${opp.profile_id}`}
-                  className="grid items-center gap-3 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 sm:grid-cols-[auto_1fr_auto]"
+                  className="grid items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card transition hover:border-primary/40 sm:grid-cols-[auto_1fr_auto]"
                 >
                   <Avatar className="h-8 w-8">
                     {opp.avatar_url ? <AvatarImage src={opp.avatar_url} alt={name} /> : null}
@@ -189,7 +189,7 @@ export default function PlayerDetail() {
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border bg-card p-3 text-sm text-muted-foreground shadow-sm">No matches yet.</div>
+          <div className="rounded-xl border border-border/60 bg-card p-3 text-sm text-muted-foreground shadow-card">No matches yet.</div>
         )}
       </section>
 

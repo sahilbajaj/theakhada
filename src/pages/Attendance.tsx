@@ -13,7 +13,7 @@ export default function Attendance() {
       {(data?.attendance ?? []).map((session) => {
         const pct = Math.round((session.checkedInCount / session.expectedCount) * 100);
         return (
-          <section key={session.id} className="rounded-lg border bg-card p-4 shadow-sm">
+          <section key={session.id} className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <Badge variant="outline">{format(new Date(session.startsAt), "h:mm a")}</Badge>

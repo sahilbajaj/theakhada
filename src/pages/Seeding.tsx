@@ -94,7 +94,7 @@ export default function Seeding() {
 
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Seeding</h2>
@@ -145,7 +145,7 @@ export default function Seeding() {
           <Skeleton className="h-14 rounded-lg" />
         </div>
       ) : order.length === 0 ? (
-        <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">No members to seed yet.</div>
+        <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">No members to seed yet.</div>
       ) : (
         <SeedingBoard
           order={order}

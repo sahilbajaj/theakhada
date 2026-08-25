@@ -62,7 +62,7 @@ export default function AcceptInvite() {
         </div>
 
         {!session ? (
-          <div className="grid gap-4 rounded-lg border bg-card p-4 shadow-sm">
+          <div className="grid gap-4 rounded-xl border border-border/60 bg-card p-4 shadow-card">
             <Button variant="outline" onClick={() => void signInWithGoogle(redirectTo)} disabled={isSubmitting}>
               Continue with Google
             </Button>
@@ -78,7 +78,7 @@ export default function AcceptInvite() {
             </form>
           </div>
         ) : (
-          <form className="grid gap-4 rounded-lg border bg-card p-4 shadow-sm" onSubmit={acceptInvite}>
+          <form className="grid gap-4 rounded-xl border border-border/60 bg-card p-4 shadow-card" onSubmit={acceptInvite}>
             <div className="grid gap-2">
               <Label htmlFor="invite-name">Full name</Label>
               <Input id="invite-name" required value={fullName} onChange={(event) => setFullName(event.target.value)} />
