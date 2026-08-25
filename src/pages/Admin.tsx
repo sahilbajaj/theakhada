@@ -179,37 +179,42 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
   const secondaryName = primaryName === member.full_name ? null : member.full_name;
 
   return (
-    <div className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card sm:grid-cols-[auto_1fr_80px_170px_auto] sm:items-center">
-      <Avatar>
-        {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={primaryName} /> : null}
-        <AvatarFallback>{initialsFrom(primaryName)}</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate font-medium">{primaryName}</p>
-          {secondaryName ? <span className="truncate text-sm text-muted-foreground">({secondaryName})</span> : null}
-          {member.is_self ? <Badge variant="outline">You</Badge> : null}
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Avatar className="h-9 w-9 shrink-0">
+          {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={primaryName} /> : null}
+          <AvatarFallback>{initialsFrom(primaryName)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-medium">{primaryName}</p>
+            {member.is_self ? <Badge variant="outline" className="shrink-0 text-[10px]">You</Badge> : null}
+          </div>
+          <p className="truncate text-xs text-muted-foreground">
+            {secondaryName ? `${secondaryName} · ` : ""}{member.email}
+          </p>
         </div>
-        <p className="truncate text-sm text-muted-foreground">{member.email}</p>
       </div>
-      <Badge variant="outline" className="w-fit sm:justify-self-center">
-        {member.rating != null ? member.rating.toFixed(1) : "—"}
-      </Badge>
-      {roleLocked ? (
-        <Badge variant="secondary" className="w-fit capitalize sm:justify-self-end">{member.role}</Badge>
-      ) : (
-        <Select value={member.role} onValueChange={(value) => roleMutation.mutate(value as MemberRole)} disabled={roleMutation.isPending}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {assignableRoles.map((item) => (
-              <SelectItem key={item} value={item} className="capitalize">{item}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-      <MemberEditDialog member={member} />
+      <div className="flex items-center gap-2 sm:shrink-0">
+        <Badge variant="outline" className="shrink-0 tabular-nums">
+          {member.rating != null ? member.rating.toFixed(1) : "—"}
+        </Badge>
+        {roleLocked ? (
+          <Badge variant="secondary" className="shrink-0 capitalize">{member.role}</Badge>
+        ) : (
+          <Select value={member.role} onValueChange={(value) => roleMutation.mutate(value as MemberRole)} disabled={roleMutation.isPending}>
+            <SelectTrigger className="h-9 w-[120px] sm:w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {assignableRoles.map((item) => (
+                <SelectItem key={item} value={item} className="capitalize">{item}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <MemberEditDialog member={member} />
+      </div>
     </div>
   );
 }
@@ -249,32 +254,31 @@ function AccessRequestRow({ request }: { request: SignupRequest }) {
   });
 
   return (
-    <div className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card lg:grid-cols-[1fr_150px_auto] lg:items-center">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="truncate font-semibold">{request.full_name}</h3>
-          <Badge variant="secondary">{request.status}</Badge>
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="truncate text-sm font-semibold">{request.full_name}</h3>
+          <Badge variant="status" className="shrink-0">{request.status}</Badge>
         </div>
-        <p className="mt-1 truncate text-sm text-muted-foreground">{request.email}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{request.email}</p>
       </div>
-      <Select value={role} onValueChange={(value) => setRole(value as RequestRole)}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="player">Player</SelectItem>
-          <SelectItem value="coach">Coach</SelectItem>
-          <SelectItem value="guest">Guest</SelectItem>
-        </SelectContent>
-      </Select>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2 sm:shrink-0">
+        <Select value={role} onValueChange={(value) => setRole(value as RequestRole)}>
+          <SelectTrigger className="h-9 w-[120px] sm:w-[130px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="player">Player</SelectItem>
+            <SelectItem value="coach">Coach</SelectItem>
+            <SelectItem value="guest">Guest</SelectItem>
+          </SelectContent>
+        </Select>
         <Button size="sm" onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending || rejectMutation.isPending}>
-          <Check className="mr-2 h-4 w-4" />
+          <Check className="h-4 w-4" />
           Approve
         </Button>
-        <Button size="sm" variant="outline" onClick={() => rejectMutation.mutate()} disabled={approveMutation.isPending || rejectMutation.isPending}>
-          <X className="mr-2 h-4 w-4" />
-          Reject
+        <Button size="sm" variant="outline" onClick={() => rejectMutation.mutate()} disabled={approveMutation.isPending || rejectMutation.isPending} aria-label="Reject">
+          <X className="h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -428,13 +432,15 @@ export default function Admin() {
         </div>
         {(invitesQuery.data ?? []).length ? (
           invitesQuery.data?.map((invite) => (
-            <div key={invite.id} className="grid gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-card sm:grid-cols-[1fr_auto_auto] sm:items-center">
-              <div className="min-w-0">
-                <p className="truncate font-medium">{invite.email}</p>
-                <p className="text-sm text-muted-foreground">Expires {new Date(invite.expires_at).toLocaleDateString()}</p>
+            <div key={invite.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{invite.email}</p>
+                <p className="truncate text-xs text-muted-foreground">Expires {new Date(invite.expires_at).toLocaleDateString()}</p>
               </div>
-              <Badge variant="outline" className="capitalize">{invite.role}</Badge>
-              <Badge variant={invite.status === "pending" ? "secondary" : "default"} className="capitalize">{invite.status}</Badge>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge variant="outline" className="capitalize">{invite.role}</Badge>
+                <Badge variant={invite.status === "pending" ? "secondary" : "default"} className="capitalize">{invite.status}</Badge>
+              </div>
             </div>
           ))
         ) : (
