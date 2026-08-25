@@ -81,6 +81,25 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
+      },
+      fontFamily: {
+        display: ['"Inter Tight"', "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        "card-hover": "var(--shadow-card-hover)",
+        "glow-primary": "var(--shadow-glow-primary)",
+        "glow-accent": "var(--shadow-glow-accent)",
+      },
+      backgroundImage: {
+        "court-wash":
+          "radial-gradient(circle at 20% 0%, hsl(var(--primary) / 0.12), transparent 50%), radial-gradient(circle at 100% 100%, hsl(var(--accent) / 0.12), transparent 55%)",
+        "hero-rim":
+          "linear-gradient(135deg, hsl(var(--primary) / 0.14) 0%, hsl(var(--accent) / 0.14) 100%)",
+        "primary-lime":
+          "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)",
       },
       keyframes: {
         "accordion-down": {

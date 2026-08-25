@@ -46,7 +46,7 @@ export default function Players() {
 
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Players</h2>
@@ -71,7 +71,7 @@ export default function Players() {
           <Skeleton className="h-16 rounded-lg" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
           No matching players.
         </div>
       ) : (
@@ -82,7 +82,7 @@ export default function Players() {
               <Link
                 key={member.profile_id}
                 to={`/players/${member.profile_id}`}
-                className="grid gap-3 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-center"
+                className="grid gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card transition hover:border-primary/40 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-center"
               >
                 <Badge variant={member.seed != null ? "default" : "outline"} className="w-9 justify-center tabular-nums">
                   {member.seed != null ? `#${member.seed}` : "—"}

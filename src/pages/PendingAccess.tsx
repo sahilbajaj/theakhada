@@ -9,7 +9,7 @@ export default function PendingAccess() {
   return (
     <main className="grid min-h-screen bg-background px-4 py-8 text-foreground">
       <section className="mx-auto grid w-full max-w-md content-center gap-4">
-        <div className="rounded-lg border bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-border/60 bg-card p-5 shadow-card">
           <h1 className="text-xl font-semibold">Access pending</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {email} is signed in, but it does not have an approved The Akhada membership yet.

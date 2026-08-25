@@ -10,7 +10,7 @@ export default function Bookings() {
 
   return (
     <div className="grid gap-5">
-      <section className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Court bookings</h2>
           <p className="text-sm text-muted-foreground">Reserve courts, manage blocks, and track check-ins.</p>
@@ -31,7 +31,7 @@ export default function Bookings() {
 
       <section className="grid gap-3">
         {(data?.bookings ?? []).map((booking) => (
-          <div key={booking.id} className="grid gap-3 rounded-lg border bg-card p-4 shadow-sm md:grid-cols-[1fr_180px_140px] md:items-center">
+          <div key={booking.id} className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card md:grid-cols-[1fr_180px_140px] md:items-center">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold">{booking.courtName}</h3>

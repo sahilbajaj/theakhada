@@ -10,7 +10,7 @@ export default function Tournaments() {
 
   return (
     <div className="grid gap-4">
-      <section className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Tournaments</h2>
           <p className="text-sm text-muted-foreground">Registration, seeding, brackets, and score flow.</p>
@@ -21,7 +21,7 @@ export default function Tournaments() {
       {(data?.tournaments ?? []).map((tournament) => {
         const seededPct = tournament.entrants ? Math.round((tournament.seeded / tournament.entrants) * 100) : 0;
         return (
-          <section key={tournament.id} className="rounded-lg border bg-card p-4 shadow-sm">
+          <section key={tournament.id} className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
             <div className="grid gap-4 lg:grid-cols-[1fr_260px] lg:items-center">
               <div>
                 <div className="flex flex-wrap items-center gap-2">

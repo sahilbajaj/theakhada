@@ -13,7 +13,7 @@ export default function Insights() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary">
             <Brain className="h-5 w-5" />
@@ -28,7 +28,7 @@ export default function Insights() {
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="mb-4 flex items-center gap-2">
           <LineChart className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Player results</h3>

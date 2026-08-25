@@ -179,7 +179,7 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
   const secondaryName = primaryName === member.full_name ? null : member.full_name;
 
   return (
-    <div className="grid gap-3 rounded-lg border bg-card p-4 shadow-sm sm:grid-cols-[auto_1fr_80px_170px_auto] sm:items-center">
+    <div className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card sm:grid-cols-[auto_1fr_80px_170px_auto] sm:items-center">
       <Avatar>
         {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={primaryName} /> : null}
         <AvatarFallback>{initialsFrom(primaryName)}</AvatarFallback>
@@ -249,7 +249,7 @@ function AccessRequestRow({ request }: { request: SignupRequest }) {
   });
 
   return (
-    <div className="grid gap-3 rounded-lg border bg-card p-4 shadow-sm lg:grid-cols-[1fr_150px_auto] lg:items-center">
+    <div className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card lg:grid-cols-[1fr_150px_auto] lg:items-center">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="truncate font-semibold">{request.full_name}</h3>
@@ -355,7 +355,7 @@ export default function Admin() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-lg border bg-card p-5 shadow-sm">
+      <div className="rounded-xl border border-border/60 bg-card p-5 shadow-card">
         <h2 className="text-xl font-semibold">Admin controls</h2>
         <p className="mt-2 text-sm text-muted-foreground">Only owners and admins can manage club access.</p>
       </div>
@@ -364,7 +364,7 @@ export default function Admin() {
 
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Admin controls</h2>
@@ -385,13 +385,13 @@ export default function Admin() {
         {(requestsQuery.data ?? []).length ? (
           requestsQuery.data?.map((request) => <AccessRequestRow key={request.id} request={request} />)
         ) : (
-          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+          <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
             {requestsQuery.isLoading ? "Loading requests..." : "No pending access requests."}
           </div>
         )}
       </section>
 
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="font-semibold">Prefer nicknames</h3>
@@ -415,7 +415,7 @@ export default function Admin() {
             <MemberRoleRow key={member.profile_id} member={member} preferNicknames={preferNicknames} />
           ))
         ) : (
-          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+          <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
             {membersQuery.isLoading ? "Loading members..." : "No members yet."}
           </div>
         )}
@@ -428,7 +428,7 @@ export default function Admin() {
         </div>
         {(invitesQuery.data ?? []).length ? (
           invitesQuery.data?.map((invite) => (
-            <div key={invite.id} className="grid gap-2 rounded-lg border bg-card p-4 shadow-sm sm:grid-cols-[1fr_auto_auto] sm:items-center">
+            <div key={invite.id} className="grid gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-card sm:grid-cols-[1fr_auto_auto] sm:items-center">
               <div className="min-w-0">
                 <p className="truncate font-medium">{invite.email}</p>
                 <p className="text-sm text-muted-foreground">Expires {new Date(invite.expires_at).toLocaleDateString()}</p>
@@ -438,7 +438,7 @@ export default function Admin() {
             </div>
           ))
         ) : (
-          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+          <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
             {invitesQuery.isLoading ? "Loading invites..." : "No invites yet."}
           </div>
         )}
@@ -446,7 +446,7 @@ export default function Admin() {
 
       <section className="grid gap-3">
         {controls.map((control) => (
-          <div key={control.label} className="flex items-start justify-between gap-4 rounded-lg border bg-card p-4 shadow-sm">
+          <div key={control.label} className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-card p-4 shadow-card">
             <div className="flex gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
                 <control.icon className="h-5 w-5" />

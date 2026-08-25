@@ -3,7 +3,6 @@ import {
   BarChart3,
   CalendarDays,
   ClipboardCheck,
-  Crown,
   LayoutDashboard,
   ListOrdered,
   LogOut,
@@ -51,28 +50,36 @@ function NavItems({ compact = false }: { compact?: boolean }) {
             to={item.to}
             end={item.to === "/app"}
             className={({ isActive }) => cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-              isActive && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-              compact && "h-14 flex-1 flex-col justify-center gap-1 px-1 py-1 text-[11px]",
+              "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+              isActive && !compact && "bg-secondary text-foreground before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:shadow-glow-primary",
+              isActive && compact && "text-foreground",
+              compact && "h-14 flex-1 flex-col justify-center gap-1 px-1 py-1 text-[11px] rounded-none",
             )}
           >
-            <item.icon className={cn("h-4 w-4", compact && "h-5 w-5")} />
-            <span className="truncate">{item.label}</span>
+            {({ isActive }) => (
+              <>
+                {compact && isActive ? (
+                  <span className="absolute inset-x-3 top-1 h-0.5 rounded-full bg-primary" aria-hidden />
+                ) : null}
+                <item.icon className={cn("h-4 w-4", compact && "h-[18px] w-[18px]", compact && isActive && "text-primary")} strokeWidth={compact && isActive ? 2.4 : 2} />
+                <span className="truncate">{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
       {compact ? null : (
         <div className="grid gap-1">
-          <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Coming soon</p>
+          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Coming soon</p>
           {comingSoonNav.map((item) => (
             <div
               key={item.label}
               aria-disabled
-              className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground/60"
+              className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/50"
             >
               <item.icon className="h-4 w-4" />
               <span className="truncate">{item.label}</span>
-              <Badge variant="outline" className="ml-auto text-[10px]">Soon</Badge>
+              <Badge variant="status" className="ml-auto">Soon</Badge>
             </div>
           ))}
         </div>
@@ -93,25 +100,27 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r bg-card lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border/70 bg-background lg:block">
         <div className="flex h-full flex-col">
           <div className="flex h-20 items-center gap-3 px-5">
-            <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <Crown className="h-6 w-6" />
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="The Akhada logo"
+              className="h-11 w-11 rounded-xl object-cover ring-1 ring-border/60 shadow-card"
+            />
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold">The Akhada</p>
-              <p className="text-sm text-muted-foreground">Tennis operations</p>
+              <p className="truncate font-display text-lg font-bold tracking-tight">The Akhada</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Tennis club</p>
             </div>
           </div>
           <div className="px-3">
             <NavItems />
           </div>
           <div className="mt-auto p-4">
-            <div className="rounded-lg border bg-background p-3">
+            <div className="card-base p-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium">Backend</span>
-                <Badge variant={demoMode ? "secondary" : "default"}>{demoMode ? "Demo" : "Supabase"}</Badge>
+                <Badge variant={demoMode ? "status" : "accent"}>{demoMode ? "Demo" : "Live"}</Badge>
               </div>
               <p className="mt-2 text-xs leading-5 text-muted-foreground">
                 {demoMode ? "Connect Supabase env vars to switch from demo data." : "Live Supabase project connected."}
@@ -122,7 +131,7 @@ export function AppShell() {
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
             <div className="flex items-center gap-3">
               <Sheet>
@@ -133,20 +142,22 @@ export function AppShell() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80">
                   <div className="mb-6 flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground">
-                      <Crown className="h-5 w-5" />
-                    </div>
+                    <img
+                      src="/logo.jpg"
+                      alt="The Akhada logo"
+                      className="h-10 w-10 rounded-xl object-cover ring-1 ring-border/60 shadow-card"
+                    />
                     <div>
-                      <p className="font-semibold">The Akhada</p>
-                      <p className="text-sm text-muted-foreground">Tennis operations</p>
+                      <p className="font-display text-base font-bold tracking-tight">The Akhada</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Tennis club</p>
                     </div>
                   </div>
                   <NavItems />
                 </SheetContent>
               </Sheet>
               <div>
-                <p className="text-sm text-muted-foreground">Today</p>
-                <h1 className="text-lg font-semibold sm:text-xl">{pageTitle(location.pathname)}</h1>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Today</p>
+                <h1 className="font-display text-lg font-bold tracking-tight sm:text-xl">{pageTitle(location.pathname)}</h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -179,7 +190,7 @@ export function AppShell() {
         </main>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background px-2 py-2 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 px-2 py-1 backdrop-blur lg:hidden">
         <NavItems compact />
       </div>
     </div>

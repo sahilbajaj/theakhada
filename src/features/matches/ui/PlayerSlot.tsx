@@ -18,7 +18,7 @@ export function PlayerSlot({ member, preferNicknames, onPick, onClear, locked, l
   if (member) {
     const name = displayName(member, { preferNicknames });
     return (
-      <div className="flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm">
+      <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card">
         <Avatar>
           {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
           <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
