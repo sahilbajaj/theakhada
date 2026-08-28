@@ -129,7 +129,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   // Resize slot arrays when format changes (setup phase only).
   useEffect(() => {
     if (phase !== "setup") return;
-    setSideA((prev) => resizeSlots(prev, perSide, isAdmin ? null : profile?.id ?? null, !isAdmin));
+    setSideA((prev) => resizeSlots(prev, perSide, profile?.id ?? null, !isAdmin));
     setSideB((prev) => resizeSlots(prev, perSide, null, false));
   }, [phase, perSide, profile?.id, isAdmin]);
 
