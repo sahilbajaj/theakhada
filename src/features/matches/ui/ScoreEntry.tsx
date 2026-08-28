@@ -325,14 +325,14 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               </div>
 
               <div className="grid gap-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Your side</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{isAdmin ? "Side A" : "Your side"}</p>
                 {sideA.map((id, i) => (
                   <PlayerSlot
                     key={`A-${i}`}
                     member={memberFor(id)}
                     preferNicknames={preferNicknames}
-                    locked={i === 0 && id === profile?.id}
-                    label={i === 0 ? "Pick you" : "Add partner"}
+                    locked={!isAdmin && i === 0 && id === profile?.id}
+                    label={i === 0 ? (isAdmin ? "Pick player" : "Pick you") : "Add partner"}
                     onPick={() => setPickerFor({ side: "A", index: i })}
                     onClear={() => clearSlot({ side: "A", index: i })}
                   />
