@@ -116,20 +116,21 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setFormat("singles");
       setBestOf(3);
       setActiveMatchId(null);
-      const selfId = profile?.id;
+      // Admins can build a match for any players, so no self pre-fill.
+      const selfId = isAdmin ? null : profile?.id;
       setSideA([selfId ?? null]);
       setSideB([null]);
       setDrafts([{ set_index: 1, side_a_games: 0, side_b_games: 0, tiebreak_a: null, tiebreak_b: null }]);
       setCurrentSetIdx(0);
     }
-  }, [open, matchId, existingMatch, profile?.id]);
+  }, [open, matchId, existingMatch, profile?.id, isAdmin]);
 
   // Resize slot arrays when format changes (setup phase only).
   useEffect(() => {
     if (phase !== "setup") return;
-    setSideA((prev) => resizeSlots(prev, perSide, profile?.id ?? null, true));
+    setSideA((prev) => resizeSlots(prev, perSide, isAdmin ? null : profile?.id ?? null, !isAdmin));
     setSideB((prev) => resizeSlots(prev, perSide, null, false));
-  }, [phase, perSide, profile?.id]);
+  }, [phase, perSide, profile?.id, isAdmin]);
 
   const roster = rosterQuery.data ?? [];
   const rosterById = useMemo(() => new Map(roster.map((r) => [r.profile_id, r])), [roster]);
