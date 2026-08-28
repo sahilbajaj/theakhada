@@ -438,8 +438,16 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               Start match
             </Button>
           ) : canEditFinal ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+              {activeMatchId ? (
+                <Button variant="outline" size="icon" aria-label="Delete match" onClick={() => setDeleteOpen(true)} disabled={deleteMatch.isPending}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
+              <Button variant="outline" onClick={handleReopen} disabled={reopenMatch.isPending}>
+                Reopen to add sets
+              </Button>
               <Button
                 className="ml-auto"
                 onClick={() => saveCurrentSet().then((ok) => ok && (toast.success("Set updated"), onOpenChange(false)))}
