@@ -346,7 +346,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               </div>
 
               <div className="grid gap-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Opponents</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{isAdmin ? "Side B" : "Opponents"}</p>
                 {sideB.map((id, i) => (
                   <PlayerSlot
                     key={`B-${i}`}
