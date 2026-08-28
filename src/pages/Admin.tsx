@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CalendarCog, Check, Pencil, ShieldCheck, SlidersHorizontal, UsersRound, X } from "lucide-react";
+import { Bell, CalendarCog, Check, Pencil, ShieldCheck, SlidersHorizontal, Trash2, UsersRound, X } from "lucide-react";
 import { InviteDialog } from "@/components/InviteDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,20 +74,34 @@ const assignableRoles: Exclude<MemberRole, "owner">[] = ["admin", "coach", "play
 function MemberEditDialog({ member }: { member: ClubMember }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [fullName, setFullName] = useState(member.full_name);
   const [nickname, setNickname] = useState(member.nickname ?? "");
   const [rating, setRating] = useState(member.rating != null ? String(member.rating) : "");
   const [avatarUrl, setAvatarUrl] = useState(member.avatar_url ?? "");
 
   useEffect(() => {
     if (open) {
+      setFullName(member.full_name);
       setNickname(member.nickname ?? "");
       setRating(member.rating != null ? String(member.rating) : "");
       setAvatarUrl(member.avatar_url ?? "");
     }
-  }, [open, member.nickname, member.rating, member.avatar_url]);
+  }, [open, member.full_name, member.nickname, member.rating, member.avatar_url]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const trimmedFullName = fullName.trim();
+      if (!trimmedFullName.length) {
+        throw new Error("Full name is required");
+      }
+      if (trimmedFullName !== member.full_name) {
+        const { error } = await supabase!.rpc("set_member_full_name" as never, {
+          p_profile_id: member.profile_id,
+          p_full_name: trimmedFullName,
+        } as never);
+        if (error) throw error;
+      }
+
       const trimmedNickname = nickname.trim();
       const nextNickname = trimmedNickname.length ? trimmedNickname : null;
       const currentNickname = member.nickname ?? null;
@@ -134,6 +158,10 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
+            <Label htmlFor="full_name">Full name</Label>
+            <Input id="full_name" value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={80} />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="nickname">Nickname</Label>
             <Input id="nickname" value={nickname} onChange={(event) => setNickname(event.target.value)} placeholder="Optional short name" maxLength={40} />
           </div>
@@ -158,6 +186,7 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
 
 function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; preferNicknames: boolean }) {
   const queryClient = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const roleMutation = useMutation({
     mutationFn: async (nextRole: MemberRole) => {
@@ -174,7 +203,24 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
     onError: (error) => toast.error("Could not update role", { description: error instanceof Error ? error.message : "Try again." }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase!.rpc("delete_player" as never, {
+        p_profile_id: member.profile_id,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["club-members"] });
+      await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
+      toast.success("Player deleted");
+      setDeleteOpen(false);
+    },
+    onError: (error) => toast.error("Could not delete player", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
   const roleLocked = member.role === "owner" || member.is_self;
+  const canDelete = member.role !== "owner" && !member.is_self;
   const primaryName = displayName(member, { preferNicknames });
   const secondaryName = primaryName === member.full_name ? null : member.full_name;
 
@@ -214,7 +260,34 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
           </Select>
         )}
         <MemberEditDialog member={member} />
+        {canDelete ? (
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Delete player"
+            onClick={() => setDeleteOpen(true)}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        ) : null}
       </div>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {member.full_name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes their profile, match participation, notifications, and login. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+              Delete player
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

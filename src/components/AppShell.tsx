@@ -100,7 +100,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border/70 bg-background lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border/70 bg-background 2xl:block">
         <div className="flex h-full flex-col">
           <div className="flex h-20 items-center gap-3 px-5">
             <img
@@ -130,13 +130,13 @@ export function AppShell() {
         </div>
       </aside>
 
-      <div className="lg:pl-72">
+      <div className="2xl:pl-72">
         <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
             <div className="flex items-center gap-3">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open navigation">
+                  <Button variant="outline" size="icon" className="2xl:hidden" aria-label="Open navigation">
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
@@ -185,12 +185,12 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="px-4 pb-24 pt-5 sm:px-6 lg:pb-8">
+        <main className="px-4 pb-28 pt-5 sm:px-6 2xl:pb-8">
           <Outlet />
         </main>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 px-2 py-1 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur 2xl:hidden">
         <NavItems compact />
       </div>
     </div>

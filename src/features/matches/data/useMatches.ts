@@ -87,6 +87,20 @@ export function useRecordSet() {
   });
 }
 
+export function useDeleteMatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (matchId: string): Promise<void> => {
+      const { error } = await supabase!.rpc("delete_match" as never, { p_match_id: matchId } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: MATCHES_KEY });
+      await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
+    },
+  });
+}
+
 export function useFinalizeMatch() {
   const queryClient = useQueryClient();
   return useMutation({

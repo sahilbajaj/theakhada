@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Minus, Plus, Sparkles } from "lucide-react";
+import { Minus, Plus, Sparkles, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
 import {
   useCreateMatch,
+  useDeleteMatch,
   useFinalizeMatch,
   useRecentMatches,
   useRecordSet,
@@ -76,6 +77,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const recordSet = useRecordSet();
   const finalizeMatch = useFinalizeMatch();
   const reopenMatch = useReopenMatch();
+  const deleteMatch = useDeleteMatch();
 
   const existingMatch: MatchListItem | undefined = useMemo(
     () => matchesQuery.data?.find((m) => m.match_id === matchId) ?? undefined,
@@ -91,6 +93,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const [drafts, setDrafts] = useState<DraftSet[]>([]);
   const [currentSetIdx, setCurrentSetIdx] = useState(0);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [pickerFor, setPickerFor] = useState<SlotAddress | null>(null);
 
   const activeStatus = existingMatch?.status ?? (activeMatchId ? "live" : "scheduled");
@@ -177,6 +180,18 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       toast.success("Match started");
     } catch (err) {
       toast.error("Could not start match", { description: err instanceof Error ? err.message : "Try again." });
+    }
+  }
+
+  async function handleDelete() {
+    if (!activeMatchId) return;
+    try {
+      await deleteMatch.mutateAsync(activeMatchId);
+      toast.success("Match deleted");
+      setDeleteOpen(false);
+      onOpenChange(false);
+    } catch (err) {
+      toast.error("Could not delete match", { description: err instanceof Error ? err.message : "Try again." });
     }
   }
 
@@ -436,6 +451,11 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
           ) : isFinal ? (
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+              {isAdmin && activeMatchId ? (
+                <Button variant="outline" size="icon" aria-label="Delete match" onClick={() => setDeleteOpen(true)} disabled={deleteMatch.isPending}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
               <Button className="ml-auto" onClick={handleReopen} disabled={reopenMatch.isPending}>
                 Reopen to edit
               </Button>
@@ -448,6 +468,11 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button variant="outline" onClick={nextSet} disabled={recordSet.isPending || !canAddMoreSets}>
                 Next set
               </Button>
+              {isAdmin && activeMatchId ? (
+                <Button variant="outline" size="icon" aria-label="Delete match" onClick={() => setDeleteOpen(true)} disabled={deleteMatch.isPending}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
               <Button
                 className="ml-auto"
                 onClick={() => setFinalizeOpen(true)}
@@ -470,6 +495,23 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
         title={pickerFor?.side === "A" ? "Add to your side" : "Add opponent"}
         onPick={(id) => pickerFor && assignSlot(pickerFor, id)}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this match?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the match, its sets, and its participant records. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMatch.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleteMatch.isPending}>
+              Delete match
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
         <AlertDialogContent>
