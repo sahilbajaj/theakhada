@@ -116,8 +116,9 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setFormat("singles");
       setBestOf(3);
       setActiveMatchId(null);
-      // Admins can build a match for any players, so no self pre-fill.
-      const selfId = isAdmin ? null : profile?.id;
+      // Default the first Side A slot to the current user for everyone;
+      // admins can still change it, non-admins keep it locked.
+      const selfId = profile?.id;
       setSideA([selfId ?? null]);
       setSideB([null]);
       setDrafts([{ set_index: 1, side_a_games: 0, side_b_games: 0, tiebreak_a: null, tiebreak_b: null }]);
