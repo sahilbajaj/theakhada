@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Trash2, Trophy } from "lucide-react";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -26,6 +36,7 @@ export default function Tournaments() {
   const isAdmin = role === "owner" || role === "admin";
   const [activeId, setActiveId] = useState<string | null>(null);
   const [tab, setTab] = useState("live");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const listQuery = useAmericanoTournaments();
   const detailQuery = useAmericanoTournament(activeId);
@@ -39,6 +50,43 @@ export default function Tournaments() {
   }, [activeId, listQuery.data]);
 
   const tournament = detailQuery.data ?? null;
+
+  const deleteTargetName =
+    (tournament && tournament.id === deleteId ? tournament.name : null) ??
+    listQuery.data?.find((t) => t.id === deleteId)?.name ??
+    "this tournament";
+
+  function confirmDelete() {
+    if (!deleteId) return;
+    const target = deleteId;
+    deleteTournament.mutate(target, {
+      onSuccess: () => {
+        toast.success("Tournament deleted");
+        setDeleteId(null);
+        if (activeId === target) setActiveId(null);
+      },
+      onError: (error) => toast.error(error.message),
+    });
+  }
+
+  const deleteDialog = (
+    <AlertDialog open={Boolean(deleteId)} onOpenChange={(next) => !next && setDeleteId(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete {deleteTargetName}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This permanently removes the tournament, its players, and every match — including submitted scores. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleteTournament.isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDelete} disabled={deleteTournament.isPending}>
+            Delete tournament
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   if (activeId && tournament) {
     return (
@@ -56,7 +104,14 @@ export default function Tournaments() {
               </p>
             </div>
           </div>
-          <Badge className="capitalize self-start sm:self-auto">{tournament.status}</Badge>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Badge className="capitalize">{tournament.status}</Badge>
+            {isAdmin ? (
+              <Button variant="outline" size="icon" aria-label="Delete tournament" onClick={() => setDeleteId(tournament.id)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </div>
         </section>
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -89,6 +144,7 @@ export default function Tournaments() {
             <Leaderboard tournament={tournament} />
           </TabsContent>
         </Tabs>
+        {deleteDialog}
       </div>
     );
   }
@@ -136,15 +192,7 @@ export default function Tournaments() {
                     <Trophy className="mr-2 h-4 w-4" />Open console
                   </Button>
                   {isAdmin ? (
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        deleteTournament.mutate(item.id, {
-                          onSuccess: () => toast.success("Tournament deleted"),
-                          onError: (error) => toast.error(error.message),
-                        })
-                      }
-                    >
+                    <Button variant="outline" onClick={() => setDeleteId(item.id)}>
                       <Trash2 className="mr-2 h-4 w-4" />Delete
                     </Button>
                   ) : null}
@@ -179,6 +227,7 @@ export default function Tournaments() {
       ) : (
         <p className="text-sm text-muted-foreground">Ask a club admin to set up the next Americano.</p>
       )}
+      {deleteDialog}
     </div>
   );
 }

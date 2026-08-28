@@ -26,10 +26,11 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
   const [players, setPlayers] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [points, setPoints] = useState<AmericanoPoints>(24);
-  const [courts, setCourts] = useState(1);
+  const [courts, setCourts] = useState<number | null>(null);
 
   const maxCourts = maxCourtsFor(Math.max(players.length, 4));
-  const effectiveCourts = Math.min(courts, maxCourts);
+  const effectiveCourts = courts == null ? maxCourts : Math.min(Math.max(1, courts), maxCourts);
+  const playersNeededForMore = players.length < 8 ? 8 - Math.max(players.length, 4) : 0;
   const preview = useMemo(
     () => (players.length >= 4 ? generateAmericanoRounds(players.length, effectiveCourts) : []),
     [players.length, effectiveCourts],
@@ -143,19 +144,24 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
         <div className="grid gap-2">
           <Label>Available courts</Label>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" onClick={() => setCourts((c) => Math.max(1, c - 1))} aria-label="Fewer courts">
+            <Button variant="outline" size="icon" onClick={() => setCourts(Math.max(1, effectiveCourts - 1))} aria-label="Fewer courts" disabled={effectiveCourts <= 1}>
               <Minus className="h-4 w-4" />
             </Button>
             <span className="w-10 text-center text-lg font-semibold tabular-nums">{effectiveCourts}</span>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setCourts((c) => Math.min(maxCourts, c + 1))}
+              onClick={() => setCourts(Math.min(maxCourts, effectiveCourts + 1))}
               aria-label="More courts"
+              disabled={effectiveCourts >= maxCourts}
             >
               <Plus className="h-4 w-4" />
             </Button>
-            <span className="text-xs text-muted-foreground">max {maxCourts} for this field</span>
+            <span className="text-xs text-muted-foreground">
+              {playersNeededForMore > 0
+                ? `add ${playersNeededForMore} more player${playersNeededForMore === 1 ? "" : "s"} for another court`
+                : `max ${maxCourts} for ${players.length} players`}
+            </span>
           </div>
         </div>
 
