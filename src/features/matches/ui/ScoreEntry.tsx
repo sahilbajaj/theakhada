@@ -116,8 +116,9 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setFormat("singles");
       setBestOf(3);
       setActiveMatchId(null);
-      // Admins can build a match for any players, so no self pre-fill.
-      const selfId = isAdmin ? null : profile?.id;
+      // Default the first Side A slot to the current user for everyone;
+      // admins can still change it, non-admins keep it locked.
+      const selfId = profile?.id;
       setSideA([selfId ?? null]);
       setSideB([null]);
       setDrafts([{ set_index: 1, side_a_games: 0, side_b_games: 0, tiebreak_a: null, tiebreak_b: null }]);
@@ -128,7 +129,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   // Resize slot arrays when format changes (setup phase only).
   useEffect(() => {
     if (phase !== "setup") return;
-    setSideA((prev) => resizeSlots(prev, perSide, isAdmin ? null : profile?.id ?? null, !isAdmin));
+    setSideA((prev) => resizeSlots(prev, perSide, profile?.id ?? null, !isAdmin));
     setSideB((prev) => resizeSlots(prev, perSide, null, false));
   }, [phase, perSide, profile?.id, isAdmin]);
 
