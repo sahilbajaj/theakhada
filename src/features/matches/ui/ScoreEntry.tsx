@@ -501,7 +501,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
         disabledIds={disabledForPicker as string[]}
         recentIds={recentIds}
         preferNicknames={preferNicknames}
-        title={pickerFor?.side === "A" ? "Add to your side" : "Add opponent"}
+        title={pickerFor?.side === "A" ? (isAdmin ? "Add to side A" : "Add to your side") : isAdmin ? "Add to side B" : "Add opponent"}
         onPick={(id) => pickerFor && assignSlot(pickerFor, id)}
       />
 
