@@ -25,13 +25,13 @@ import { cn } from "@/lib/utils";
 const primaryNav = [
   { to: "/app", label: "Home", icon: LayoutDashboard },
   { to: "/scores", label: "Scores", icon: Swords },
+  { to: "/tournaments", label: "Tournaments", icon: Trophy },
   { to: "/players", label: "Players", icon: UsersRound },
   { to: "/seeding", label: "Seeding", icon: ListOrdered, adminOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
 
 const comingSoonNav = [
-  { label: "Tournaments", icon: Trophy },
   { label: "Bookings", icon: CalendarDays },
   { label: "Attendance", icon: ClipboardCheck },
   { label: "Insights", icon: BarChart3 },
