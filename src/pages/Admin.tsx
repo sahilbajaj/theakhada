@@ -184,6 +184,56 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
   );
 }
 
+function AddGuestPanel() {
+  const queryClient = useQueryClient();
+  const [guestName, setGuestName] = useState("");
+
+  const createGuest = useMutation({
+    mutationFn: async () => {
+      const trimmed = guestName.trim();
+      if (!trimmed.length) throw new Error("Guest name is required");
+      const { error } = await supabase!.rpc("create_guest_member" as never, { p_full_name: trimmed } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["club-members"] });
+      await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
+      toast.success("Guest added");
+      setGuestName("");
+    },
+    onError: (error) => toast.error("Could not add guest", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
+  return (
+    <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
+      <h2 className="text-lg font-semibold">Add guest</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Guests have no login but appear in the roster, so you can add them to matches and tournaments.
+      </p>
+      <form
+        className="mt-3 flex flex-col gap-2 sm:flex-row"
+        onSubmit={(event) => {
+          event.preventDefault();
+          createGuest.mutate();
+        }}
+      >
+        <Input
+          value={guestName}
+          onChange={(event) => setGuestName(event.target.value)}
+          placeholder="Guest name"
+          maxLength={80}
+          aria-label="Guest name"
+        />
+        <Button type="submit" disabled={createGuest.isPending || !guestName.trim().length}>
+          <UsersRound className="mr-2 h-4 w-4" />
+          Add guest
+        </Button>
+      </form>
+    </section>
+  );
+}
+
+
 function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; preferNicknames: boolean }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -482,11 +532,14 @@ export default function Admin() {
         </div>
       </section>
 
+      <AddGuestPanel />
+
       <section className="grid gap-3">
         <div>
           <h2 className="text-lg font-semibold">Members</h2>
           <p className="text-sm text-muted-foreground">Change roles for existing members. The owner role is locked. Tap the pencil to edit nickname and rating.</p>
         </div>
+
         {(membersQuery.data ?? []).length ? (
           membersQuery.data?.map((member) => (
             <MemberRoleRow key={member.profile_id} member={member} preferNicknames={preferNicknames} />
