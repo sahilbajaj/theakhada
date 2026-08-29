@@ -482,11 +482,14 @@ export default function Admin() {
         </div>
       </section>
 
+      <AddGuestPanel />
+
       <section className="grid gap-3">
         <div>
           <h2 className="text-lg font-semibold">Members</h2>
           <p className="text-sm text-muted-foreground">Change roles for existing members. The owner role is locked. Tap the pencil to edit nickname and rating.</p>
         </div>
+
         {(membersQuery.data ?? []).length ? (
           membersQuery.data?.map((member) => (
             <MemberRoleRow key={member.profile_id} member={member} preferNicknames={preferNicknames} />
