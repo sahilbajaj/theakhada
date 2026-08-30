@@ -3,14 +3,22 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useRecentMatches } from "@/features/matches/data/useMatches";
+import { toast } from "@/components/ui/sonner";
+import { useRecentMatches, useReviewDay, useReviewMatch, useUnreviewedMatches } from "@/features/matches/data/useMatches";
 import { MatchCard } from "@/features/matches/ui/MatchCard";
+import { ReviewQueue } from "@/features/matches/ui/ReviewQueue";
 import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
+import { useAuth } from "@/contexts/AuthContext";
 import { useClubSettings } from "@/hooks/useClubSettings";
 
 export default function Scores() {
   const { preferNicknames } = useClubSettings();
+  const { role } = useAuth();
+  const isAdmin = role === "owner" || role === "admin";
   const matchesQuery = useRecentMatches(50);
+  const reviewQueue = useUnreviewedMatches(isAdmin);
+  const reviewMatch = useReviewMatch();
+  const reviewDay = useReviewDay();
   const [entryOpen, setEntryOpen] = useState(false);
   const [entryMatchId, setEntryMatchId] = useState<string | null>(null);
 
@@ -21,6 +29,24 @@ export default function Scores() {
       recent: rows.filter((m) => m.status === "final"),
     };
   }, [matchesQuery.data]);
+
+  const unreviewed = reviewQueue.data ?? [];
+  const reviewPending = reviewMatch.isPending || reviewDay.isPending;
+
+  function handleReviewMatch(matchId: string) {
+    reviewMatch.mutate(matchId, {
+      onSuccess: () => toast.success("Match marked reviewed"),
+      onError: (error) => toast.error("Could not mark reviewed", { description: error instanceof Error ? error.message : "Try again." }),
+    });
+  }
+
+  function handleReviewDay(day: string) {
+    reviewDay.mutate(day, {
+      onSuccess: (count) => toast.success(`${count} match${count === 1 ? "" : "es"} marked reviewed`),
+      onError: (error) => toast.error("Could not review the day", { description: error instanceof Error ? error.message : "Try again." }),
+    });
+  }
+
 
   function openNew() {
     setEntryMatchId(null);
