@@ -27,6 +27,7 @@ const primaryNav = [
   { to: "/scores", label: "Scores", icon: Swords },
   { to: "/tournaments", label: "Tournaments", icon: Trophy },
   { to: "/players", label: "Players", icon: UsersRound },
+  { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/seeding", label: "Seeding", icon: ListOrdered, adminOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
@@ -34,7 +35,6 @@ const primaryNav = [
 const comingSoonNav = [
   { label: "Bookings", icon: CalendarDays },
   { label: "Attendance", icon: ClipboardCheck },
-  { label: "Insights", icon: BarChart3 },
 ];
 
 function NavItems({ compact = false }: { compact?: boolean }) {
