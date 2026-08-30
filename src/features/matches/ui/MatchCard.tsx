@@ -9,6 +9,8 @@ interface Props {
   match: MatchListItem;
   preferNicknames: boolean;
   onOpen?: (matchId: string) => void;
+  /** Admin-only: show whether this match has been reviewed. */
+  showReviewState?: boolean;
 }
 
 function SideRow({ side, roster, sets, matchStatus, winner, preferNicknames }: {
