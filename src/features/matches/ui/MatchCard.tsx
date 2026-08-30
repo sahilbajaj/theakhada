@@ -57,7 +57,7 @@ function SideRow({ side, roster, sets, matchStatus, winner, preferNicknames }: {
   );
 }
 
-export function MatchCard({ match, preferNicknames, onOpen }: Props) {
+export function MatchCard({ match, preferNicknames, onOpen, showReviewState }: Props) {
   const winner = match.status === "final" ? match.winner_side : null;
   const { a, b } = tallySets(match.sets);
   const startedAt = new Date(match.starts_at);
@@ -73,6 +73,11 @@ export function MatchCard({ match, preferNicknames, onOpen }: Props) {
             {match.status}
           </Badge>
           <Badge variant="outline" className="capitalize">{match.format}</Badge>
+          {showReviewState && match.status === "final" ? (
+            <Badge variant={match.reviewed_at ? "secondary" : "outline"} className="text-[10px]">
+              {match.reviewed_at ? "Reviewed" : "Needs review"}
+            </Badge>
+          ) : null}
         </div>
         <p className="text-xs text-muted-foreground">
           {startedAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {startedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
