@@ -94,7 +94,13 @@ export default function Scores() {
             <Skeleton className="h-24 rounded-lg" />
           ) : recent.length ? (
             recent.map((match) => (
-              <MatchCard key={match.match_id} match={match} preferNicknames={preferNicknames} onOpen={openExisting} />
+              <MatchCard
+                key={match.match_id}
+                match={match}
+                preferNicknames={preferNicknames}
+                onOpen={openExisting}
+                showReviewState={isAdmin}
+              />
             ))
           ) : (
             <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
@@ -102,6 +108,22 @@ export default function Scores() {
             </div>
           )}
         </TabsContent>
+        {isAdmin ? (
+          <TabsContent value="review" className="mt-4">
+            {reviewQueue.isLoading ? (
+              <Skeleton className="h-24 rounded-lg" />
+            ) : (
+              <ReviewQueue
+                matches={unreviewed}
+                preferNicknames={preferNicknames}
+                onOpen={openExisting}
+                onReviewMatch={handleReviewMatch}
+                onReviewDay={handleReviewDay}
+                isPending={reviewPending}
+              />
+            )}
+          </TabsContent>
+        ) : null}
       </Tabs>
 
       <ScoreEntry open={entryOpen} onOpenChange={setEntryOpen} matchId={entryMatchId} />
