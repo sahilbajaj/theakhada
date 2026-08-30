@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Minus, Plus, Sparkles, Trash2, Users } from "lucide-react";
+import { Minus, Plus, Sparkles, Trash2, Users, UsersRound } from "lucide-react";
+import { RosterPickerSheet } from "@/components/RosterPickerSheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
   const [draft, setDraft] = useState("");
   const [points, setPoints] = useState<AmericanoPoints>(24);
   const [courts, setCourts] = useState<number | null>(null);
+  const [rosterOpen, setRosterOpen] = useState(false);
 
   const maxCourts = maxCourtsFor(Math.max(players.length, 4));
   const effectiveCourts = courts == null ? maxCourts : Math.min(Math.max(1, courts), maxCourts);
@@ -56,6 +58,20 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
     setPlayers((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function addFromRoster(names: string[]) {
+    setPlayers((prev) => {
+      const lower = new Set(prev.map((p) => p.trim().toLowerCase()));
+      const additions: string[] = [];
+      names.forEach((name) => {
+        const key = name.trim().toLowerCase();
+        if (!key || lower.has(key)) return;
+        lower.add(key);
+        additions.push(name.trim());
+      });
+      return [...prev, ...additions];
+    });
+  }
+
   function submit() {
     const cleaned = players.map((p) => p.trim()).filter(Boolean);
     if (cleaned.length < 4) {
@@ -78,23 +94,34 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
           <Badge variant="outline">{players.length}</Badge>
         </div>
 
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            addPlayer();
-          }}
-        >
-          <Input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Add a player name"
-            aria-label="Player name"
-          />
-          <Button type="submit" variant="secondary">
-            <Plus className="mr-1 h-4 w-4" />Add
+        <div className="mt-3 grid gap-2">
+          <Button type="button" variant="outline" onClick={() => setRosterOpen(true)}>
+            <UsersRound className="mr-2 h-4 w-4" />Add from club
           </Button>
-        </form>
+          <form
+            className="flex gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addPlayer();
+            }}
+          >
+            <Input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Or type a guest name"
+              aria-label="Player name"
+            />
+            <Button type="submit" variant="secondary">
+              <Plus className="mr-1 h-4 w-4" />Add
+            </Button>
+          </form>
+        </div>
+        <RosterPickerSheet
+          open={rosterOpen}
+          onOpenChange={setRosterOpen}
+          existingNames={players}
+          onConfirm={addFromRoster}
+        />
 
         <ul className="mt-3 grid gap-2">
           {players.map((player, index) => (
