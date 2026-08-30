@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { BestOf, MatchFormat, MatchListItem } from "@/features/matches/types";
 
 const MATCHES_KEY = ["matches", "recent"] as const;
+const UNREVIEWED_KEY = ["matches", "unreviewed"] as const;
 
 export function useRecentMatches(limit = 25) {
   return useQuery({
@@ -13,6 +14,46 @@ export function useRecentMatches(limit = 25) {
       if (error) throw error;
       return (data as MatchListItem[] | null) ?? [];
     },
+  });
+}
+
+export function useUnreviewedMatches(enabled: boolean, limit = 200) {
+  return useQuery({
+    queryKey: [...UNREVIEWED_KEY, limit],
+    enabled: Boolean(supabase) && enabled,
+    queryFn: async (): Promise<MatchListItem[]> => {
+      const { data, error } = await supabase!.rpc("list_unreviewed_matches" as never, { p_limit: limit } as never);
+      if (error) throw error;
+      return (data as MatchListItem[] | null) ?? [];
+    },
+  });
+}
+
+async function invalidateMatchViews(queryClient: ReturnType<typeof useQueryClient>) {
+  await queryClient.invalidateQueries({ queryKey: MATCHES_KEY });
+  await queryClient.invalidateQueries({ queryKey: UNREVIEWED_KEY });
+}
+
+export function useReviewMatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (matchId: string): Promise<void> => {
+      const { error } = await supabase!.rpc("review_match" as never, { p_match_id: matchId } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateMatchViews(queryClient),
+  });
+}
+
+export function useReviewDay() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (day: string): Promise<number> => {
+      const { data, error } = await supabase!.rpc("review_matches_for_day" as never, { p_day: day } as never);
+      if (error) throw error;
+      return (data as number | null) ?? 0;
+    },
+    onSuccess: () => invalidateMatchViews(queryClient),
   });
 }
 

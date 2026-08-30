@@ -30,4 +30,5 @@ export interface MatchListItem {
   side_b: MatchParticipant[];
   sets: MatchSetRow[];
   winner_side: MatchSide | null;
+  reviewed_at?: string | null;
 }
