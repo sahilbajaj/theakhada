@@ -9,10 +9,12 @@ export interface RosterMember {
   avatar_url: string | null;
   rating: number | null;
   seed: number | null;
+  role: string;
 }
 
 interface MembershipRow {
   profile_id: string;
+  role: string;
   profiles: {
     id: string;
     full_name: string | null;
@@ -21,6 +23,7 @@ interface MembershipRow {
     rating: number | null;
     seed: number | null;
     email: string | null;
+    role: string | null;
   } | null;
 }
 
@@ -32,7 +35,7 @@ export function useClubRoster() {
     queryFn: async (): Promise<RosterMember[]> => {
       const { data, error } = await supabase!
         .from("club_memberships" as never)
-        .select("profile_id, profiles:profile_id(id, full_name, nickname, avatar_url, rating, seed, email)")
+        .select("profile_id, role, profiles:profile_id(id, full_name, nickname, avatar_url, rating, seed, email, role)")
         .eq("club_id", clubId!);
       if (error) throw error;
       const rows = (data as MembershipRow[] | null) ?? [];
@@ -45,6 +48,7 @@ export function useClubRoster() {
           avatar_url: row.profiles!.avatar_url,
           rating: row.profiles!.rating,
           seed: row.profiles!.seed,
+          role: row.role ?? row.profiles!.role ?? "player",
         }))
         .sort((a, b) => a.full_name.localeCompare(b.full_name));
     },

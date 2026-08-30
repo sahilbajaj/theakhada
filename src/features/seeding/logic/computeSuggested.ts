@@ -22,7 +22,9 @@ export function suggestedOrder(
 ): string[] {
   if (!members.length) return [];
 
-  const scored: Scored[] = members.map((member) => {
+  const eligible = members.filter((m) => m.role !== "guest");
+
+  const scored: Scored[] = eligible.map((member) => {
     const stats = computeStats(matches, member.profile_id, now);
     const rating = member.rating ?? 0;
     const decided = stats.form.length;

@@ -42,7 +42,10 @@ export default function Seeding() {
   const setAllSeeds = useSetAllSeeds();
   const clearAllSeeds = useClearAllSeeds();
 
-  const roster = rosterQuery.data ?? [];
+  const roster = useMemo(
+    () => (rosterQuery.data ?? []).filter((m) => m.role !== "guest"),
+    [rosterQuery.data],
+  );
   const matches = matchesQuery.data ?? [];
 
   const suggestion = useMemo(() => suggestedOrder(roster, matches), [roster, matches]);
