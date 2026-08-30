@@ -116,20 +116,22 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setFormat("singles");
       setBestOf(3);
       setActiveMatchId(null);
+      // Default the first Side A slot to the current user for everyone;
+      // admins can still change it, non-admins keep it locked.
       const selfId = profile?.id;
       setSideA([selfId ?? null]);
       setSideB([null]);
       setDrafts([{ set_index: 1, side_a_games: 0, side_b_games: 0, tiebreak_a: null, tiebreak_b: null }]);
       setCurrentSetIdx(0);
     }
-  }, [open, matchId, existingMatch, profile?.id]);
+  }, [open, matchId, existingMatch, profile?.id, isAdmin]);
 
   // Resize slot arrays when format changes (setup phase only).
   useEffect(() => {
     if (phase !== "setup") return;
-    setSideA((prev) => resizeSlots(prev, perSide, profile?.id ?? null, true));
+    setSideA((prev) => resizeSlots(prev, perSide, profile?.id ?? null, !isAdmin));
     setSideB((prev) => resizeSlots(prev, perSide, null, false));
-  }, [phase, perSide, profile?.id]);
+  }, [phase, perSide, profile?.id, isAdmin]);
 
   const roster = rosterQuery.data ?? [];
   const rosterById = useMemo(() => new Map(roster.map((r) => [r.profile_id, r])), [roster]);
@@ -324,14 +326,14 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               </div>
 
               <div className="grid gap-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Your side</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{isAdmin ? "Side A" : "Your side"}</p>
                 {sideA.map((id, i) => (
                   <PlayerSlot
                     key={`A-${i}`}
                     member={memberFor(id)}
                     preferNicknames={preferNicknames}
-                    locked={i === 0 && id === profile?.id}
-                    label={i === 0 ? "Pick you" : "Add partner"}
+                    locked={!isAdmin && i === 0 && id === profile?.id}
+                    label={i === 0 ? (isAdmin ? "Pick player" : "Pick you") : "Add partner"}
                     onPick={() => setPickerFor({ side: "A", index: i })}
                     onClear={() => clearSlot({ side: "A", index: i })}
                   />
@@ -345,7 +347,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               </div>
 
               <div className="grid gap-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Opponents</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{isAdmin ? "Side B" : "Opponents"}</p>
                 {sideB.map((id, i) => (
                   <PlayerSlot
                     key={`B-${i}`}
@@ -500,7 +502,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
         disabledIds={disabledForPicker as string[]}
         recentIds={recentIds}
         preferNicknames={preferNicknames}
-        title={pickerFor?.side === "A" ? "Add to your side" : "Add opponent"}
+        title={pickerFor?.side === "A" ? (isAdmin ? "Add to side A" : "Add to your side") : isAdmin ? "Add to side B" : "Add opponent"}
         onPick={(id) => pickerFor && assignSlot(pickerFor, id)}
       />
 
