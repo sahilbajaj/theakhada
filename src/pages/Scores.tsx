@@ -74,6 +74,7 @@ export default function Scores() {
         <TabsList>
           <TabsTrigger value="live">Live ({live.length})</TabsTrigger>
           <TabsTrigger value="recent">Recent ({recent.length})</TabsTrigger>
+          {isAdmin ? <TabsTrigger value="review">To review ({unreviewed.length})</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="live" className="mt-4 grid gap-3">
           {matchesQuery.isLoading ? (
