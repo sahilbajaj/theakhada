@@ -12,9 +12,16 @@ import {
   generateTeamsAndGroups,
   maxGroupCountFor,
 } from "@/features/roundrobin/logic/generateBracket";
-import type { GeneratedTeam, RoundRobinPoints } from "@/features/roundrobin/types";
+import type { GeneratedTeam, RoundRobinFormat, RoundRobinPoints } from "@/features/roundrobin/types";
+import { FORMAT_LABELS, isSetFormat } from "@/features/roundrobin/types";
 
 const POINT_OPTIONS: RoundRobinPoints[] = [16, 24, 32];
+const FORMAT_OPTIONS: RoundRobinFormat[] = ["points", "set", "bo3", "bo3_mtb"];
+const STAGES: { key: "group" | "semi" | "final"; label: string; hint: string }[] = [
+  { key: "group", label: "League games", hint: "Group-stage matches" },
+  { key: "semi", label: "Semi-finals", hint: "Top 4 knockout" },
+  { key: "final", label: "Final", hint: "Championship match" },
+];
 
 interface Preview {
   teams: GeneratedTeam[];
@@ -29,6 +36,9 @@ interface SetupPanelProps {
     pointsPerMatch: RoundRobinPoints;
     courtCount: number;
     groupCount: number;
+    groupFormat: RoundRobinFormat;
+    semiFormat: RoundRobinFormat;
+    finalFormat: RoundRobinFormat;
   }) => void;
   isPending?: boolean;
 }
@@ -40,6 +50,18 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
   const [points, setPoints] = useState<RoundRobinPoints>(24);
   const [courts, setCourts] = useState(1);
   const [groups, setGroups] = useState(1);
+  const [groupFormat, setGroupFormat] = useState<RoundRobinFormat>("points");
+  const [semiFormat, setSemiFormat] = useState<RoundRobinFormat>("points");
+  const [finalFormat, setFinalFormat] = useState<RoundRobinFormat>("points");
+  const [semiTouched, setSemiTouched] = useState(false);
+  const [finalTouched, setFinalTouched] = useState(false);
+
+  function handleGroupFormat(next: RoundRobinFormat) {
+    setGroupFormat(next);
+    if (!semiTouched) setSemiFormat(next === "points" ? "points" : next);
+    if (!finalTouched) setFinalFormat(next === "points" ? "points" : next);
+    setPreview(null);
+  }
   const [preview, setPreview] = useState<Preview | null>(null);
   const [rosterOpen, setRosterOpen] = useState(false);
 
@@ -113,8 +135,13 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
       pointsPerMatch: points,
       courtCount: courts,
       groupCount: effectiveGroups,
+      groupFormat,
+      semiFormat,
+      finalFormat,
     });
   }
+
+  const anySetBased = isSetFormat(groupFormat) || isSetFormat(semiFormat) || isSetFormat(finalFormat);
 
   const previewMatches = useMemo(
     () => (preview ? generateRoundRobinSchedule(preview.teams, courts) : []),
@@ -219,26 +246,68 @@ export function SetupPanel({ onCreate, isPending }: SetupPanelProps) {
           <Input id="rr-name" value={name} onChange={(event) => setName(event.target.value)} />
         </div>
 
-        <div className="grid gap-2">
-          <Label>Points per match</Label>
-          <div className="flex gap-2">
-            {POINT_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setPoints(option)}
-                className={cn(
-                  "flex-1 rounded-full border px-3 py-2 text-sm font-semibold transition-colors",
-                  points === option
-                    ? "border-primary bg-primary text-primary-foreground shadow-glow-primary"
-                    : "border-border bg-secondary text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {option}
-              </button>
-            ))}
+        <div className="grid gap-3">
+          <Label>Scoring format per stage</Label>
+          <div className="grid gap-2">
+            {STAGES.map((stage) => {
+              const value =
+                stage.key === "group" ? groupFormat : stage.key === "semi" ? semiFormat : finalFormat;
+              const setValue = (next: RoundRobinFormat) => {
+                if (stage.key === "group") handleGroupFormat(next);
+                else if (stage.key === "semi") { setSemiFormat(next); setSemiTouched(true); }
+                else { setFinalFormat(next); setFinalTouched(true); }
+              };
+              return (
+                <div key={stage.key} className="rounded-lg border border-border/60 p-2.5">
+                  <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-semibold">{stage.label}</span>
+                    <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{stage.hint}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {FORMAT_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setValue(option)}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                          value === option
+                            ? "border-primary bg-primary text-primary-foreground shadow-glow-primary"
+                            : "border-border bg-secondary text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {FORMAT_LABELS[option]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
+
+        {groupFormat === "points" || semiFormat === "points" || finalFormat === "points" ? (
+          <div className="grid gap-2">
+            <Label>Points per match {anySetBased ? "(points-format stages only)" : ""}</Label>
+            <div className="flex gap-2">
+              {POINT_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setPoints(option)}
+                  className={cn(
+                    "flex-1 rounded-full border px-3 py-2 text-sm font-semibold transition-colors",
+                    points === option
+                      ? "border-primary bg-primary text-primary-foreground shadow-glow-primary"
+                      : "border-border bg-secondary text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-2">
           <Label>Groups</Label>

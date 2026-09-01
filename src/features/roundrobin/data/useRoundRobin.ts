@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   GeneratedRRMatch,
+  RoundRobinFormat,
   RoundRobinPoints,
   RoundRobinTournamentDetail,
   RoundRobinTournamentSummary,
+  SetScore,
 } from "@/features/roundrobin/types";
 
 const LIST_KEY = ["roundrobin", "list"] as const;
@@ -44,6 +46,9 @@ interface CreateInput {
   courtCount: number;
   groupCount: number;
   matches: GeneratedRRMatch[];
+  groupFormat: RoundRobinFormat;
+  semiFormat: RoundRobinFormat;
+  finalFormat: RoundRobinFormat;
 }
 
 export function useCreateRoundRobinTournament() {
@@ -58,6 +63,9 @@ export function useCreateRoundRobinTournament() {
         p_court_count: input.courtCount,
         p_group_count: input.groupCount,
         p_matches: input.matches,
+        p_group_format: input.groupFormat,
+        p_semi_format: input.semiFormat,
+        p_final_format: input.finalFormat,
       } as never);
       if (error) throw error;
       return data as unknown as string;
@@ -109,6 +117,29 @@ export function useSubmitRoundRobinScore() {
         p_match_id: input.matchId,
         p_team_a_points: input.teamAPoints,
         p_team_b_points: input.teamBPoints,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: async (_data, input) => {
+      await queryClient.invalidateQueries({ queryKey: detailKey(input.tournamentId) });
+      await queryClient.invalidateQueries({ queryKey: LIST_KEY });
+    },
+  });
+}
+
+interface SubmitSetInput {
+  tournamentId: string;
+  matchId: string;
+  setScores: SetScore[];
+}
+
+export function useSubmitRoundRobinSetScore() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: SubmitSetInput): Promise<void> => {
+      const { error } = await supabase!.rpc("submit_roundrobin_set_score" as never, {
+        p_match_id: input.matchId,
+        p_set_scores: input.setScores,
       } as never);
       if (error) throw error;
     },

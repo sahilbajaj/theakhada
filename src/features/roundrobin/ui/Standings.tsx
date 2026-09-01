@@ -1,19 +1,37 @@
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import type { RoundRobinTeam, RoundRobinTournamentDetail } from "@/features/roundrobin/types";
+import type {
+  RoundRobinFormat,
+  RoundRobinTeam,
+  RoundRobinTournamentDetail,
+} from "@/features/roundrobin/types";
+import { isSetFormat } from "@/features/roundrobin/types";
 
-function rankTeams(teams: RoundRobinTeam[]): RoundRobinTeam[] {
+function rankTeams(teams: RoundRobinTeam[], setBased: boolean): RoundRobinTeam[] {
   return [...teams].sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
-    const diffA = a.points_for - a.points_against;
-    const diffB = b.points_for - b.points_against;
-    if (diffB !== diffA) return diffB - diffA;
-    if (b.points_for !== a.points_for) return b.points_for - a.points_for;
+    if (setBased) {
+      const setsA = a.sets_for - a.sets_against;
+      const setsB = b.sets_for - b.sets_against;
+      if (setsB !== setsA) return setsB - setsA;
+      const gamesA = a.games_for - a.games_against;
+      const gamesB = b.games_for - b.games_against;
+      if (gamesB !== gamesA) return gamesB - gamesA;
+      if (b.games_for !== a.games_for) return b.games_for - a.games_for;
+    } else {
+      const diffA = a.points_for - a.points_against;
+      const diffB = b.points_for - b.points_against;
+      if (diffB !== diffA) return diffB - diffA;
+      if (b.points_for !== a.points_for) return b.points_for - a.points_for;
+    }
     return a.team_number - b.team_number;
   });
 }
 
 export function Standings({ tournament }: { tournament: RoundRobinTournamentDetail }) {
+  const groupFormat: RoundRobinFormat = tournament.group_format;
+  const setBased = isSetFormat(groupFormat);
+
   const byGroup = useMemo(() => {
     const map = new Map<number, RoundRobinTeam[]>();
     tournament.teams.forEach((team) => {
@@ -22,8 +40,8 @@ export function Standings({ tournament }: { tournament: RoundRobinTournamentDeta
     });
     return Array.from(map.entries())
       .sort(([a], [b]) => a - b)
-      .map(([group, teams]) => ({ group, teams: rankTeams(teams) }));
-  }, [tournament.teams]);
+      .map(([group, teams]) => ({ group, teams: rankTeams(teams, setBased) }));
+  }, [tournament.teams, setBased]);
 
   return (
     <div className="grid gap-4">
@@ -41,9 +59,22 @@ export function Standings({ tournament }: { tournament: RoundRobinTournamentDeta
                   <th className="py-2 pr-2">Team</th>
                   <th className="py-2 pr-2 text-right">W</th>
                   <th className="py-2 pr-2 text-right">L</th>
-                  <th className="py-2 pr-2 text-right">PF</th>
-                  <th className="py-2 pr-2 text-right">PA</th>
-                  <th className="py-2 pr-2 text-right">±</th>
+                  {setBased ? (
+                    <>
+                      <th className="py-2 pr-2 text-right" title="Sets won">SF</th>
+                      <th className="py-2 pr-2 text-right" title="Sets lost">SA</th>
+                      <th className="py-2 pr-2 text-right" title="Set difference">±S</th>
+                      <th className="py-2 pr-2 text-right" title="Games won">GF</th>
+                      <th className="py-2 pr-2 text-right" title="Games lost">GA</th>
+                      <th className="py-2 pr-2 text-right" title="Game difference">±G</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="py-2 pr-2 text-right">PF</th>
+                      <th className="py-2 pr-2 text-right">PA</th>
+                      <th className="py-2 pr-2 text-right">±</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -55,9 +86,22 @@ export function Standings({ tournament }: { tournament: RoundRobinTournamentDeta
                     </td>
                     <td className="py-2 pr-2 text-right tabular-nums">{team.wins}</td>
                     <td className="py-2 pr-2 text-right tabular-nums">{team.losses}</td>
-                    <td className="py-2 pr-2 text-right tabular-nums">{team.points_for}</td>
-                    <td className="py-2 pr-2 text-right tabular-nums">{team.points_against}</td>
-                    <td className="py-2 pr-2 text-right tabular-nums">{team.points_for - team.points_against}</td>
+                    {setBased ? (
+                      <>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.sets_for}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.sets_against}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.sets_for - team.sets_against}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.games_for}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.games_against}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.games_for - team.games_against}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.points_for}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.points_against}</td>
+                        <td className="py-2 pr-2 text-right tabular-nums">{team.points_for - team.points_against}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

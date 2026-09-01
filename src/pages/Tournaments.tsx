@@ -37,7 +37,15 @@ import {
   useRoundRobinTournament,
   useRoundRobinTournaments,
   useSubmitRoundRobinScore,
+  useSubmitRoundRobinSetScore,
 } from "@/features/roundrobin/data/useRoundRobin";
+import { FORMAT_SHORT, isSetFormat, type RRSubmitPayload, type RoundRobinTournamentDetail } from "@/features/roundrobin/types";
+
+function formatDescription(t: RoundRobinTournamentDetail): string {
+  const anySet = isSetFormat(t.group_format) || isSetFormat(t.semi_format) || isSetFormat(t.final_format);
+  if (!anySet) return `${t.points_per_match} points per match`;
+  return `Groups ${FORMAT_SHORT[t.group_format]} · Semis ${FORMAT_SHORT[t.semi_format]} · Final ${FORMAT_SHORT[t.final_format]}`;
+}
 import { generateRoundRobinSchedule } from "@/features/roundrobin/logic/generateBracket";
 import { Bracket as RoundRobinBracket } from "@/features/roundrobin/ui/Bracket";
 import { LiveMatches as RoundRobinLiveMatches } from "@/features/roundrobin/ui/LiveMatches";
@@ -248,6 +256,9 @@ function RoundRobinSetup({ onCreated }: { onCreated: (id: string) => void }) {
             courtCount: input.courtCount,
             groupCount: input.groupCount,
             matches,
+            groupFormat: input.groupFormat,
+            semiFormat: input.semiFormat,
+            finalFormat: input.finalFormat,
           },
           {
             onSuccess: (id) => {
@@ -331,6 +342,7 @@ function AmericanoConsole({ id, isAdmin, onBack, onDelete, trailing }: { id: str
 function RoundRobinConsole({ id, isAdmin, onBack, onDelete, trailing }: { id: string; isAdmin: boolean; onBack: () => void; onDelete: (name: string) => void; trailing: React.ReactNode }) {
   const detailQuery = useRoundRobinTournament(id);
   const submitScore = useSubmitRoundRobinScore();
+  const submitSetScore = useSubmitRoundRobinSetScore();
   const reopenMatch = useReopenRoundRobinMatch();
   const [tab, setTab] = useState("groups");
 
@@ -341,11 +353,23 @@ function RoundRobinConsole({ id, isAdmin, onBack, onDelete, trailing }: { id: st
     .filter((m) => m.stage === "group")
     .every((m) => m.status === "completed");
 
-  const handleSubmit = (matchId: string, a: number, b: number) =>
-    submitScore.mutate(
-      { tournamentId: tournament.id, matchId, teamAPoints: a, teamBPoints: b },
-      { onSuccess: () => toast.success("Score saved"), onError: (error) => toast.error(error.message) },
-    );
+  const handleSubmit = (matchId: string, payload: RRSubmitPayload) => {
+    const opts = {
+      onSuccess: () => toast.success("Score saved"),
+      onError: (error: Error) => toast.error(error.message),
+    };
+    if (payload.format === "points") {
+      submitScore.mutate(
+        { tournamentId: tournament.id, matchId, teamAPoints: payload.teamAPoints, teamBPoints: payload.teamBPoints },
+        opts,
+      );
+    } else {
+      submitSetScore.mutate(
+        { tournamentId: tournament.id, matchId, setScores: payload.setScores },
+        opts,
+      );
+    }
+  };
   const handleReopen = (matchId: string) =>
     reopenMatch.mutate(
       { tournamentId: tournament.id, matchId },
@@ -363,7 +387,7 @@ function RoundRobinConsole({ id, isAdmin, onBack, onDelete, trailing }: { id: st
             <h1 className="text-xl font-semibold">{tournament.name}</h1>
             <p className="text-sm text-muted-foreground">
               Round Robin · {tournament.teams.length} teams · {tournament.group_count} group{tournament.group_count === 1 ? "" : "s"} ·
-              {" "}{tournament.court_count} court{tournament.court_count > 1 ? "s" : ""} · {tournament.points_per_match} points per match
+              {" "}{tournament.court_count} court{tournament.court_count > 1 ? "s" : ""} · {formatDescription(tournament)}
             </p>
           </div>
         </div>
@@ -386,7 +410,7 @@ function RoundRobinConsole({ id, isAdmin, onBack, onDelete, trailing }: { id: st
         <TabsContent value="groups" className="mt-4">
           <RoundRobinLiveMatches
             tournament={tournament}
-            isPending={submitScore.isPending || reopenMatch.isPending}
+            isPending={submitScore.isPending || submitSetScore.isPending || reopenMatch.isPending}
             onSubmit={handleSubmit}
             onReopen={handleReopen}
           />
@@ -397,7 +421,7 @@ function RoundRobinConsole({ id, isAdmin, onBack, onDelete, trailing }: { id: st
         <TabsContent value="bracket" className="mt-4">
           <RoundRobinBracket
             tournament={tournament}
-            isPending={submitScore.isPending || reopenMatch.isPending}
+            isPending={submitScore.isPending || submitSetScore.isPending || reopenMatch.isPending}
             onSubmit={handleSubmit}
             onReopen={handleReopen}
           />

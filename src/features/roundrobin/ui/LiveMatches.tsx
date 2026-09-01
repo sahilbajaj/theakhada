@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import type { RoundRobinMatch, RoundRobinTeam, RoundRobinTournamentDetail } from "@/features/roundrobin/types";
+import type {
+  RRSubmitPayload,
+  RoundRobinMatch,
+  RoundRobinTeam,
+  RoundRobinTournamentDetail,
+} from "@/features/roundrobin/types";
+import { FORMAT_SHORT, isSetFormat } from "@/features/roundrobin/types";
+import { SetScoreEditor } from "@/features/roundrobin/ui/SetScoreEditor";
 
 interface LiveMatchesProps {
   tournament: RoundRobinTournamentDetail;
-  onSubmit: (matchId: string, a: number, b: number) => void;
+  onSubmit: (matchId: string, payload: RRSubmitPayload) => void;
   onReopen: (matchId: string) => void;
   isPending?: boolean;
 }
@@ -82,13 +89,113 @@ function MatchScoreCard({
   teamA?: RoundRobinTeam;
   teamB?: RoundRobinTeam;
   pointsPerMatch: number;
-  onSubmit: (matchId: string, a: number, b: number) => void;
+  onSubmit: (matchId: string, payload: RRSubmitPayload) => void;
   onReopen: (matchId: string) => void;
   isPending?: boolean;
 }) {
   const locked = match.status === "completed";
-  const [scoreA, setScoreA] = useState(locked ? String(match.team_a_points ?? "") : "");
-  const [scoreB, setScoreB] = useState(locked ? String(match.team_b_points ?? "") : "");
+  const setBased = isSetFormat(match.format);
+
+  return (
+    <article className={cn("rounded-xl border border-border/60 bg-card p-4 shadow-card transition-shadow hover:shadow-card-hover", locked && "border-primary/40")}>
+      <header className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-sm font-semibold">
+          <MapPin className="h-4 w-4 text-primary" />Court {match.court_number}
+        </span>
+        <div className="flex items-center gap-1">
+          {match.group_no != null ? <Badge variant="outline">Group {String.fromCharCode(64 + match.group_no)}</Badge> : null}
+          <Badge variant="outline">{FORMAT_SHORT[match.format]}</Badge>
+          <Badge variant={locked ? "default" : "outline"}>{locked ? "Completed" : "Pending"}</Badge>
+        </div>
+      </header>
+
+      <div className="mt-3 grid gap-2">
+        <TeamNameRow label="Team A" name={teamLabel(teamA)} />
+        <TeamNameRow label="Team B" name={teamLabel(teamB)} />
+      </div>
+
+      {setBased ? (
+        <div className="mt-3">
+          {locked ? (
+            <ReadOnlySetSummary match={match} />
+          ) : (
+            <SetScoreEditor
+              format={match.format as Exclude<RoundRobinMatch["format"], "points">}
+              teamALabel={teamLabel(teamA)}
+              teamBLabel={teamLabel(teamB)}
+              initialSets={match.set_scores}
+              disabled={!teamA || !teamB}
+              isPending={isPending}
+              onSubmit={(sets) => onSubmit(match.id, { format: "set", setScores: sets })}
+            />
+          )}
+        </div>
+      ) : (
+        <PointsEditor
+          match={match}
+          pointsPerMatch={pointsPerMatch}
+          disabled={locked}
+          isPending={isPending}
+          onSubmit={(a, b) => onSubmit(match.id, { format: "points", teamAPoints: a, teamBPoints: b })}
+        />
+      )}
+
+      {locked ? (
+        <Button variant="outline" className="mt-3 w-full" onClick={() => onReopen(match.id)} disabled={isPending}>
+          <LockOpen className="mr-2 h-4 w-4" />Edit score
+        </Button>
+      ) : null}
+    </article>
+  );
+}
+
+function TeamNameRow({ label, name }: { label: string; name: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-2.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+        <p className="truncate text-sm font-medium">{name}</p>
+      </div>
+    </div>
+  );
+}
+
+function ReadOnlySetSummary({ match }: { match: RoundRobinMatch }) {
+  const sets = match.set_scores ?? [];
+  return (
+    <div className="grid gap-1 rounded-lg bg-secondary/50 p-2.5 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Sets</span>
+        <span className="font-semibold tabular-nums">
+          {match.team_a_sets ?? 0} – {match.team_b_sets ?? 0}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {sets.map((s, i) => (
+          <span key={i} className="rounded-full border border-border/60 px-2 py-0.5 text-xs tabular-nums">
+            {s.a}-{s.b}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PointsEditor({
+  match,
+  pointsPerMatch,
+  disabled,
+  isPending,
+  onSubmit,
+}: {
+  match: RoundRobinMatch;
+  pointsPerMatch: number;
+  disabled: boolean;
+  isPending?: boolean;
+  onSubmit: (a: number, b: number) => void;
+}) {
+  const [scoreA, setScoreA] = useState(disabled ? String(match.team_a_points ?? "") : "");
+  const [scoreB, setScoreB] = useState(disabled ? String(match.team_b_points ?? "") : "");
 
   const a = Number(scoreA);
   const b = Number(scoreB);
@@ -101,63 +208,45 @@ function MatchScoreCard({
       toast.error(a === b ? "No ties allowed" : `Scores must add up to exactly ${pointsPerMatch}`);
       return;
     }
-    onSubmit(match.id, a, b);
+    onSubmit(a, b);
   }
 
   return (
-    <article className={cn("rounded-xl border border-border/60 bg-card p-4 shadow-card transition-shadow hover:shadow-card-hover", locked && "border-primary/40")}>
-      <header className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-sm font-semibold">
-          <MapPin className="h-4 w-4 text-primary" />Court {match.court_number}
-        </span>
-        <div className="flex items-center gap-1">
-          {match.group_no != null ? <Badge variant="outline">Group {String.fromCharCode(64 + match.group_no)}</Badge> : null}
-          <Badge variant={locked ? "default" : "outline"}>{locked ? "Completed" : "Pending"}</Badge>
-        </div>
-      </header>
-
-      <div className="mt-3 grid gap-2">
-        <TeamRow label="Team A" name={teamLabel(teamA)} value={scoreA} onChange={setScoreA} disabled={locked} />
-        <TeamRow label="Team B" name={teamLabel(teamB)} value={scoreB} onChange={setScoreB} disabled={locked} />
+    <div className="mt-3 grid gap-2">
+      <div className="flex items-center gap-2">
+        <span className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Points</span>
+        <Input
+          inputMode="numeric"
+          className="h-10 w-16 text-center text-base font-semibold tabular-nums"
+          value={scoreA}
+          disabled={disabled}
+          onChange={(event) => setScoreA(event.target.value.replace(/[^0-9]/g, ""))}
+          aria-label="Team A score"
+        />
+        <span className="text-xs text-muted-foreground">–</span>
+        <Input
+          inputMode="numeric"
+          className="h-10 w-16 text-center text-base font-semibold tabular-nums"
+          value={scoreB}
+          disabled={disabled}
+          onChange={(event) => setScoreB(event.target.value.replace(/[^0-9]/g, ""))}
+          aria-label="Team B score"
+        />
       </div>
-
-      {locked ? (
-        <Button variant="outline" className="mt-3 w-full" onClick={() => onReopen(match.id)} disabled={isPending}>
-          <LockOpen className="mr-2 h-4 w-4" />Edit score
-        </Button>
-      ) : (
+      {!disabled ? (
         <>
-          <p className={cn("mt-2 text-xs", filled && !valid ? "text-destructive" : "text-muted-foreground")}>
+          <p className={cn("text-xs", filled && !valid ? "text-destructive" : "text-muted-foreground")}>
             {filled && !valid
               ? a === b
                 ? "Tie not allowed — one team must win"
                 : `Total is ${a + b} — must equal ${pointsPerMatch}`
               : `Scores must total ${pointsPerMatch} · no ties`}
           </p>
-          <Button className="mt-2 w-full" onClick={submit} disabled={isPending || !valid}>
+          <Button className="w-full" onClick={submit} disabled={isPending || !valid}>
             <CheckCircle2 className="mr-2 h-4 w-4" />Submit Score
           </Button>
         </>
-      )}
-    </article>
-  );
-}
-
-function TeamRow({ label, name, value, onChange, disabled }: { label: string; name: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-2.5">
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-medium">{name}</p>
-      </div>
-      <Input
-        inputMode="numeric"
-        className="h-11 w-16 text-center text-lg font-semibold tabular-nums"
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value.replace(/[^0-9]/g, ""))}
-        aria-label={`${label} score`}
-      />
+      ) : null}
     </div>
   );
 }
