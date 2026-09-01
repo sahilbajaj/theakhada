@@ -37,7 +37,7 @@ export function PickerSheet({ open, onOpenChange, candidates, disabledIds = [], 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] gap-3 p-0 sm:max-w-md">
+      <DialogContent className="max-h-[80dvh] gap-3 p-0 sm:max-w-md">
         <DialogHeader className="px-4 pt-4">
           <DialogTitle>{title ?? "Pick player"}</DialogTitle>
         </DialogHeader>
@@ -66,7 +66,7 @@ export function PickerSheet({ open, onOpenChange, candidates, disabledIds = [], 
 
         <Command shouldFilter className="border-t">
           <CommandInput placeholder="Search players…" value={query} onValueChange={setQuery} />
-          <CommandList className="max-h-[50vh]">
+          <CommandList className="max-h-[50dvh]">
             <CommandEmpty>No matching player.</CommandEmpty>
             <CommandGroup>
               {candidates.map((member) => {

@@ -291,7 +291,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[92vh]">
+      <DrawerContent className="max-h-[92dvh]">
         <DrawerHeader className="text-left">
           <DrawerTitle>
             {phase === "setup"
