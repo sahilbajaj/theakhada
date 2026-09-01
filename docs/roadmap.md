@@ -57,6 +57,16 @@ Ordered by rough priority. Each is a self-contained slice.
 - Delete match: admin-only `delete_match(id)` RPC + confirm dialog.
 - Admin lock/unlock finalized matches (prevent reopen after N hours).
 
+### Multi-club support
+- **Today**: schema carries `club_id` everywhere and RLS is club-scoped, but every write RPC calls `public.default_club_id()` (returns the oldest club in the DB) and every list RPC filters by the same. Result: the whole app effectively targets one club even though multiple can exist.
+- **Slice**:
+  1. Every mutation RPC takes `p_club_id` and gates on `is_club_admin(p_club_id)` / `is_club_member(p_club_id)` — drop `default_club_id()` from write paths. Affects RR, Americano, seeding, match-review, matches, admin RPCs.
+  2. Every list RPC filters by a passed-in `p_club_id` (or by all clubs the caller is a member of).
+  3. Frontend threads `AuthContext.clubId` into every hook call.
+  4. Add a club switcher for users who belong to more than one club — today `AuthContext.clubId` is single-valued from `access.club_id`; extend to a list + active selection persisted in local storage.
+- **Out of scope for the first pass**: cross-club leaderboards, per-club branding, billing.
+- **Rough size**: ~1 day, mostly mechanical. Should be its own PR — mixing it into any feature PR would make review painful.
+
 ### Avatar upload
 - Supabase Storage bucket `avatars`. Signed upload URLs from a small RPC.
 - Cropper UI in profile self-edit; write result to `profiles.avatar_url`.
@@ -85,5 +95,4 @@ Live nav is deliberately minimal: **Home · Scores · Admin**. Routes for the fo
 
 - Live scoring for spectators (websocket updates).
 - Push notifications outside the app.
-- Multi-club support in the UI (schema already carries `club_id`).
 - ELO-style automatic rating updates.

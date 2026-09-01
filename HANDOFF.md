@@ -10,6 +10,7 @@
 - `node_modules/`, `dist/`, `.env`, and `.env.local` are ignored by the app repo.
 - Development guidance now lives in `docs/`.
 
+
 ## Verified
 
 - `npm run typecheck`, `npm run lint`, and `npm run build` have been used as the validation baseline.
