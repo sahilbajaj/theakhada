@@ -248,6 +248,10 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   }
 
   async function nextSet() {
+    if (currentSetIssue) {
+      toast.error("Finish this set first", { description: currentSetIssue });
+      return;
+    }
     const ok = await saveCurrentSet();
     if (!ok) return;
     setDrafts((prev) => {
