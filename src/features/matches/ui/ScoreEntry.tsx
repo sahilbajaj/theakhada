@@ -447,6 +447,12 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                   {projectedWinner ? <Badge>Side {projectedWinner} wins</Badge> : null}
                 </div>
               </div>
+
+              {currentSetIssue ? (
+                <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                  {currentSetIssue}
+                </p>
+              ) : null}
             </>
           )}
         </div>
