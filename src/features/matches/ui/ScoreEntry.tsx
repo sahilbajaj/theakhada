@@ -32,7 +32,7 @@ import {
 import { useRecentOpponents } from "@/features/matches/data/useRecentOpponents";
 import { PickerSheet } from "@/features/matches/ui/PickerSheet";
 import { PlayerSlot } from "@/features/matches/ui/PlayerSlot";
-import { isSetComplete, matchWinner, setsToWin, tallySets } from "@/features/matches/logic/scoreRules";
+import { invalidSetReason, isSetComplete, isSetEmpty, matchWinner, setsToWin, tallySets } from "@/features/matches/logic/scoreRules";
 import type {
   BestOf,
   MatchFormat,
