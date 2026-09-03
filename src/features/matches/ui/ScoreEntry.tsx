@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Minus, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Minus, PauseCircle, PlayCircle, Plus, Sparkles, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,8 @@ import {
   useRecentMatches,
   useRecordSet,
   useReopenMatch,
+  useResumeMatch,
+  useSuspendMatch,
 } from "@/features/matches/data/useMatches";
 import { useRecentOpponents } from "@/features/matches/data/useRecentOpponents";
 import { PickerSheet } from "@/features/matches/ui/PickerSheet";
@@ -40,7 +42,15 @@ import type {
   MatchParticipant,
   MatchSetRow,
   MatchSide,
+  SuspendReason,
 } from "@/features/matches/types";
+
+const SUSPEND_REASONS: { value: SuspendReason; label: string }[] = [
+  { value: "rain", label: "Rain" },
+  { value: "injury", label: "Injury" },
+  { value: "darkness", label: "Darkness" },
+  { value: "other", label: "Other" },
+];
 
 interface Props {
   open: boolean;
@@ -78,6 +88,8 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const finalizeMatch = useFinalizeMatch();
   const reopenMatch = useReopenMatch();
   const deleteMatch = useDeleteMatch();
+  const suspendMatch = useSuspendMatch();
+  const resumeMatch = useResumeMatch();
 
   const existingMatch: MatchListItem | undefined = useMemo(
     () => matchesQuery.data?.find((m) => m.match_id === matchId) ?? undefined,
@@ -94,6 +106,9 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const [currentSetIdx, setCurrentSetIdx] = useState(0);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendReason, setSuspendReason] = useState<SuspendReason | null>(null);
+  const [suspendNote, setSuspendNote] = useState("");
   const [pickerFor, setPickerFor] = useState<SlotAddress | null>(null);
 
   const activeStatus = existingMatch?.status ?? (activeMatchId ? "live" : "scheduled");
@@ -194,6 +209,38 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       onOpenChange(false);
     } catch (err) {
       toast.error("Could not delete match", { description: err instanceof Error ? err.message : "Try again." });
+    }
+  }
+
+  function openSuspend() {
+    setSuspendReason(null);
+    setSuspendNote("");
+    setSuspendOpen(true);
+  }
+
+  async function handleSuspend() {
+    if (!activeMatchId || !suspendReason) return;
+    try {
+      await suspendMatch.mutateAsync({
+        matchId: activeMatchId,
+        reason: suspendReason,
+        note: suspendNote.trim() || null,
+      });
+      toast.success("Match suspended");
+      setSuspendOpen(false);
+      onOpenChange(false);
+    } catch (err) {
+      toast.error("Could not suspend match", { description: err instanceof Error ? err.message : "Try again." });
+    }
+  }
+
+  async function handleResume() {
+    if (!activeMatchId) return;
+    try {
+      await resumeMatch.mutateAsync(activeMatchId);
+      toast.success("Match resumed");
+    } catch (err) {
+      toast.error("Could not resume match", { description: err instanceof Error ? err.message : "Try again." });
     }
   }
 
@@ -298,8 +345,9 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const targetSets = setsToWin(bestOf);
   const canAddMoreSets = drafts.length < bestOf && !projectedWinner;
   const isFinal = activeStatus === "final";
+  const isSuspended = activeStatus === "suspended";
   const canEditFinal = isFinal && isAdmin;
-  const editable = !isFinal || canEditFinal;
+  const editable = (!isFinal && !isSuspended) || canEditFinal;
   const hasAnyGames = tally.a + tally.b > 0 || (currentSet ? currentSet.side_a_games + currentSet.side_b_games > 0 : false);
 
   const disabledForPicker = pickerFor
@@ -317,6 +365,8 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               ? "Edit finalized match"
               : isFinal
               ? "Match finalized"
+              : isSuspended
+              ? "Match suspended"
               : "Score match"}
           </DrawerTitle>
         </DrawerHeader>
@@ -381,7 +431,20 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
             </>
           ) : (
             <>
-              <div className="flex flex-wrap items-center gap-2">
+              {isSuspended ? (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <p className="font-medium text-destructive">
+                    Suspended{existingMatch?.suspended_reason ? ` — ${existingMatch.suspended_reason}` : ""}
+                  </p>
+                  {existingMatch?.suspended_note ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{existingMatch.suspended_note}</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">Resume before scoring or finalizing.</p>
+                  )}
+                </div>
+              ) : null}
+
+              <div className={"flex flex-wrap items-center gap-2 " + (isSuspended ? "opacity-60" : "")}>
                 {drafts.map((set, index) => (
                   <button
                     key={set.set_index}
@@ -415,6 +478,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                 ) : null}
               </div>
 
+              <div className={isSuspended ? "pointer-events-none opacity-70" : ""}>
               <SideScoreCard
                 label="Side A"
                 names={filledA.map((id) => nameFor(id))}
@@ -437,6 +501,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                 showTiebreak={showTiebreakUI}
                 highlight={projectedWinner === "B"}
               />
+              </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
                 <span>Sets: {tally.a}–{tally.b} · first to {targetSets}</span>
@@ -481,6 +546,19 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                 Save changes
               </Button>
             </div>
+          ) : isSuspended ? (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+              {isAdmin && activeMatchId ? (
+                <Button variant="outline" size="icon" aria-label="Delete match" onClick={() => setDeleteOpen(true)} disabled={deleteMatch.isPending}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
+              <Button className="ml-auto" onClick={handleResume} disabled={resumeMatch.isPending}>
+                <PlayCircle className="mr-2 h-4 w-4" />
+                Resume match
+              </Button>
+            </div>
           ) : isFinal ? (
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
@@ -504,6 +582,12 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               {isAdmin && activeMatchId ? (
                 <Button variant="outline" size="icon" aria-label="Delete match" onClick={() => setDeleteOpen(true)} disabled={deleteMatch.isPending}>
                   <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
+              {activeMatchId && activeStatus === "live" ? (
+                <Button variant="outline" onClick={openSuspend} disabled={suspendMatch.isPending}>
+                  <PauseCircle className="mr-2 h-4 w-4" />
+                  Suspend
                 </Button>
               ) : null}
               <Button
@@ -541,6 +625,51 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
             <AlertDialogCancel disabled={deleteMatch.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleteMatch.isPending}>
               Delete match
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend this match?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The recorded sets stay put. No one can score or finalize until it's resumed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid gap-3">
+            <div>
+              <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Reason</p>
+              <ToggleGroup
+                type="single"
+                value={suspendReason ?? ""}
+                onValueChange={(v) => v && setSuspendReason(v as SuspendReason)}
+                className="w-full"
+              >
+                {SUSPEND_REASONS.map((r) => (
+                  <ToggleGroupItem key={r.value} value={r.value} className="flex-1">
+                    {r.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+            <div>
+              <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Note (optional)</p>
+              <textarea
+                value={suspendNote}
+                onChange={(e) => setSuspendNote(e.target.value.slice(0, 200))}
+                rows={2}
+                placeholder="e.g. resume tomorrow 6pm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-right text-[10px] text-muted-foreground">{suspendNote.length}/200</p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={suspendMatch.isPending}>Keep scoring</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSuspend} disabled={suspendMatch.isPending || !suspendReason}>
+              Suspend match
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

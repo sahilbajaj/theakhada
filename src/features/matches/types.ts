@@ -1,5 +1,6 @@
 export type MatchFormat = "singles" | "doubles";
-export type MatchStatus = "scheduled" | "live" | "final";
+export type MatchStatus = "scheduled" | "live" | "final" | "suspended";
+export type SuspendReason = "rain" | "injury" | "darkness" | "other";
 export type MatchSide = "A" | "B";
 export type BestOf = 1 | 3 | 5;
 
@@ -31,4 +32,6 @@ export interface MatchListItem {
   sets: MatchSetRow[];
   winner_side: MatchSide | null;
   reviewed_at?: string | null;
+  suspended_reason?: SuspendReason | null;
+  suspended_note?: string | null;
 }

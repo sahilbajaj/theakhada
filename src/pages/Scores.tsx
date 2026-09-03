@@ -24,8 +24,12 @@ export default function Scores() {
 
   const { live, recent } = useMemo(() => {
     const rows = matchesQuery.data ?? [];
+    const order: Record<string, number> = { live: 0, suspended: 1, scheduled: 2 };
+    const liveRows = rows
+      .filter((m) => m.status !== "final")
+      .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
     return {
-      live: rows.filter((m) => m.status !== "final"),
+      live: liveRows,
       recent: rows.filter((m) => m.status === "final"),
     };
   }, [matchesQuery.data]);

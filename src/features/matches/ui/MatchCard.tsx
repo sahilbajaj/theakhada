@@ -69,9 +69,12 @@ export function MatchCard({ match, preferNicknames, onOpen, showReviewState }: P
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Badge variant={match.status === "live" ? "default" : match.status === "final" ? "secondary" : "outline"} className="capitalize">
+          <Badge variant={match.status === "live" ? "default" : match.status === "final" ? "secondary" : match.status === "suspended" ? "destructive" : "outline"} className="capitalize">
             {match.status}
           </Badge>
+          {match.status === "suspended" && match.suspended_reason ? (
+            <Badge variant="outline" className="capitalize">{match.suspended_reason}</Badge>
+          ) : null}
           <Badge variant="outline" className="capitalize">{match.format}</Badge>
           {showReviewState && match.status === "final" ? (
             <Badge variant={match.reviewed_at ? "secondary" : "outline"} className="text-[10px]">

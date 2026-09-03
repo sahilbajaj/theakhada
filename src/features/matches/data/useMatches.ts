@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { BestOf, MatchFormat, MatchListItem } from "@/features/matches/types";
+import type { BestOf, MatchFormat, MatchListItem, SuspendReason } from "@/features/matches/types";
 
 const MATCHES_KEY = ["matches", "recent"] as const;
 const UNREVIEWED_KEY = ["matches", "unreviewed"] as const;
@@ -139,6 +139,38 @@ export function useDeleteMatch() {
       await queryClient.invalidateQueries({ queryKey: MATCHES_KEY });
       await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
     },
+  });
+}
+
+interface SuspendMatchInput {
+  matchId: string;
+  reason: SuspendReason;
+  note?: string | null;
+}
+
+export function useSuspendMatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: SuspendMatchInput): Promise<void> => {
+      const { error } = await supabase!.rpc("suspend_match" as never, {
+        p_match_id: input.matchId,
+        p_reason: input.reason,
+        p_note: input.note ?? null,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateMatchViews(queryClient),
+  });
+}
+
+export function useResumeMatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (matchId: string): Promise<void> => {
+      const { error } = await supabase!.rpc("resume_match" as never, { p_match_id: matchId } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateMatchViews(queryClient),
   });
 }
 
