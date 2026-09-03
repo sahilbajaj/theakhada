@@ -285,6 +285,14 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const tally = tallySets(drafts);
   const projectedWinner = matchWinner(drafts, bestOf);
   const currentComplete = currentSet ? isSetComplete(currentSet) : false;
+  const currentSetIssue = currentSet && !isSetEmpty(currentSet) ? invalidSetReason(currentSet) : null;
+  const playedDrafts = drafts.filter((s) => !isSetEmpty(s));
+  const firstBadSet = playedDrafts.find((s) => invalidSetReason(s) !== null);
+  const finalizeIssue = !playedDrafts.length
+    ? "Enter at least one completed set."
+    : firstBadSet
+    ? `Set ${firstBadSet.set_index}: ${invalidSetReason(firstBadSet)}`
+    : null;
   const currentAtDeuce = currentSet ? currentSet.side_a_games === 6 && currentSet.side_b_games === 6 : false;
   const showTiebreakUI = currentAtDeuce || (currentSet ? currentSet.tiebreak_a != null || currentSet.tiebreak_b != null : false);
   const targetSets = setsToWin(bestOf);
