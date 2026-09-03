@@ -265,6 +265,11 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
 
   async function endMatch() {
     if (!activeMatchId) return;
+    if (finalizeIssue) {
+      toast.error("Incomplete set score", { description: finalizeIssue });
+      setFinalizeOpen(false);
+      return;
+    }
     const ok = await saveCurrentSet();
     if (!ok) return;
     try {
