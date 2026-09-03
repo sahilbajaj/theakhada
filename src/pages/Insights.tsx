@@ -52,7 +52,7 @@ export default function Insights() {
   const nameOf = (p: Parameters<typeof nameOfPlayer>[0]) => nameOfPlayer(p, preferNicknames);
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 gap-4">
       <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
         <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary">
@@ -67,15 +67,17 @@ export default function Insights() {
         </div>
       </section>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <TabsList className="no-scrollbar flex w-full max-w-full justify-start gap-1 overflow-x-auto flex-nowrap">
-          <TabsTrigger value="highlights">Highlights</TabsTrigger>
-          <TabsTrigger value="rivalry">Rivalry</TabsTrigger>
-          <TabsTrigger value="form">Form</TabsTrigger>
-          <TabsTrigger value="style">Style</TabsTrigger>
-          <TabsTrigger value="participation">Participation</TabsTrigger>
-          <TabsTrigger value="milestones">Milestones</TabsTrigger>
-        </TabsList>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="min-w-0">
+        <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+          <TabsList className="inline-flex w-max flex-nowrap gap-1">
+            <TabsTrigger value="highlights">Highlights</TabsTrigger>
+            <TabsTrigger value="rivalry">Rivalry</TabsTrigger>
+            <TabsTrigger value="form">Form</TabsTrigger>
+            <TabsTrigger value="style">Style</TabsTrigger>
+            <TabsTrigger value="participation">Participation</TabsTrigger>
+            <TabsTrigger value="milestones">Milestones</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Highlights ------------------------------------------------- */}
         <TabsContent value="highlights" className="mt-3">
