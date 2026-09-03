@@ -572,7 +572,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               </Button>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => saveCurrentSet().then((ok) => ok && toast.success("Set saved"))} disabled={recordSet.isPending}>
                 Save set
               </Button>
@@ -585,9 +585,14 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                 </Button>
               ) : null}
               {activeMatchId && activeStatus === "live" ? (
-                <Button variant="outline" onClick={openSuspend} disabled={suspendMatch.isPending}>
-                  <PauseCircle className="mr-2 h-4 w-4" />
-                  Suspend
+                <Button
+                  variant="outline"
+                  aria-label="Suspend match"
+                  onClick={openSuspend}
+                  disabled={suspendMatch.isPending}
+                >
+                  <PauseCircle className="h-4 w-4" />
+                  <span className="ml-2 hidden sm:inline">Suspend</span>
                 </Button>
               ) : null}
               <Button
