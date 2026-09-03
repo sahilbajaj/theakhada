@@ -68,7 +68,7 @@ export default function Insights() {
       </section>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <TabsList className="flex w-full flex-wrap justify-start gap-1">
+        <TabsList className="no-scrollbar flex w-full max-w-full justify-start gap-1 overflow-x-auto flex-nowrap">
           <TabsTrigger value="highlights">Highlights</TabsTrigger>
           <TabsTrigger value="rivalry">Rivalry</TabsTrigger>
           <TabsTrigger value="form">Form</TabsTrigger>

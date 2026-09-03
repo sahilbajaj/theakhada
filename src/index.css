@@ -169,4 +169,12 @@
     70%  { box-shadow: 0 0 0 10px hsl(var(--destructive) / 0); }
     100% { box-shadow: 0 0 0 0 hsl(var(--destructive) / 0); }
   }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
