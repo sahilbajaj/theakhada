@@ -498,7 +498,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button variant="outline" onClick={() => saveCurrentSet().then((ok) => ok && toast.success("Set saved"))} disabled={recordSet.isPending}>
                 Save set
               </Button>
-              <Button variant="outline" onClick={nextSet} disabled={recordSet.isPending || !canAddMoreSets}>
+              <Button variant="outline" onClick={nextSet} disabled={recordSet.isPending || !canAddMoreSets || Boolean(currentSetIssue)}>
                 Next set
               </Button>
               {isAdmin && activeMatchId ? (
