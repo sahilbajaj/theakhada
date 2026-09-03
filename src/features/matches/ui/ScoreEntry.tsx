@@ -476,7 +476,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button
                 className="ml-auto"
                 onClick={() => saveCurrentSet().then((ok) => ok && (toast.success("Set updated"), onOpenChange(false)))}
-                disabled={recordSet.isPending}
+                disabled={recordSet.isPending || Boolean(currentSetIssue)}
               >
                 Save changes
               </Button>
