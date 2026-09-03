@@ -32,7 +32,7 @@ import {
 import { useRecentOpponents } from "@/features/matches/data/useRecentOpponents";
 import { PickerSheet } from "@/features/matches/ui/PickerSheet";
 import { PlayerSlot } from "@/features/matches/ui/PlayerSlot";
-import { isSetComplete, matchWinner, setsToWin, tallySets } from "@/features/matches/logic/scoreRules";
+import { invalidSetReason, isSetComplete, isSetEmpty, matchWinner, setsToWin, tallySets } from "@/features/matches/logic/scoreRules";
 import type {
   BestOf,
   MatchFormat,
@@ -248,6 +248,10 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   }
 
   async function nextSet() {
+    if (currentSetIssue) {
+      toast.error("Finish this set first", { description: currentSetIssue });
+      return;
+    }
     const ok = await saveCurrentSet();
     if (!ok) return;
     setDrafts((prev) => {
@@ -261,6 +265,11 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
 
   async function endMatch() {
     if (!activeMatchId) return;
+    if (finalizeIssue) {
+      toast.error("Incomplete set score", { description: finalizeIssue });
+      setFinalizeOpen(false);
+      return;
+    }
     const ok = await saveCurrentSet();
     if (!ok) return;
     try {
@@ -276,6 +285,14 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const tally = tallySets(drafts);
   const projectedWinner = matchWinner(drafts, bestOf);
   const currentComplete = currentSet ? isSetComplete(currentSet) : false;
+  const currentSetIssue = currentSet && !isSetEmpty(currentSet) ? invalidSetReason(currentSet) : null;
+  const playedDrafts = drafts.filter((s) => !isSetEmpty(s));
+  const firstBadSet = playedDrafts.find((s) => invalidSetReason(s) !== null);
+  const finalizeIssue = !playedDrafts.length
+    ? "Enter at least one completed set."
+    : firstBadSet
+    ? `Set ${firstBadSet.set_index}: ${invalidSetReason(firstBadSet)}`
+    : null;
   const currentAtDeuce = currentSet ? currentSet.side_a_games === 6 && currentSet.side_b_games === 6 : false;
   const showTiebreakUI = currentAtDeuce || (currentSet ? currentSet.tiebreak_a != null || currentSet.tiebreak_b != null : false);
   const targetSets = setsToWin(bestOf);
@@ -430,6 +447,12 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
                   {projectedWinner ? <Badge>Side {projectedWinner} wins</Badge> : null}
                 </div>
               </div>
+
+              {currentSetIssue ? (
+                <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                  {currentSetIssue}
+                </p>
+              ) : null}
             </>
           )}
         </div>
@@ -453,7 +476,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button
                 className="ml-auto"
                 onClick={() => saveCurrentSet().then((ok) => ok && (toast.success("Set updated"), onOpenChange(false)))}
-                disabled={recordSet.isPending}
+                disabled={recordSet.isPending || Boolean(currentSetIssue)}
               >
                 Save changes
               </Button>
@@ -475,7 +498,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button variant="outline" onClick={() => saveCurrentSet().then((ok) => ok && toast.success("Set saved"))} disabled={recordSet.isPending}>
                 Save set
               </Button>
-              <Button variant="outline" onClick={nextSet} disabled={recordSet.isPending || !canAddMoreSets}>
+              <Button variant="outline" onClick={nextSet} disabled={recordSet.isPending || !canAddMoreSets || Boolean(currentSetIssue)}>
                 Next set
               </Button>
               {isAdmin && activeMatchId ? (
@@ -486,7 +509,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button
                 className="ml-auto"
                 onClick={() => setFinalizeOpen(true)}
-                disabled={recordSet.isPending || finalizeMatch.isPending || !hasAnyGames}
+                disabled={recordSet.isPending || finalizeMatch.isPending || !hasAnyGames || Boolean(finalizeIssue)}
               >
                 End match
               </Button>
