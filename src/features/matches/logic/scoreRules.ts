@@ -20,6 +20,25 @@ export function isSetComplete(set: MatchSetRow): boolean {
   return false;
 }
 
+/** A set with no games entered at all (not yet played). */
+export function isSetEmpty(set: MatchSetRow): boolean {
+  return (
+    set.side_a_games === 0 &&
+    set.side_b_games === 0 &&
+    (set.tiebreak_a ?? 0) === 0 &&
+    (set.tiebreak_b ?? 0) === 0
+  );
+}
+
+/** Human-readable reason a set score isn't a legal finished set, or null when it is. */
+export function invalidSetReason(set: MatchSetRow): string | null {
+  const { side_a_games: a, side_b_games: b } = set;
+  if (isSetComplete(set)) return null;
+  if (a === 6 && b === 6) return "6–6 needs a tiebreak score";
+  if ((a === 7 && b === 6) || (b === 7 && a === 6)) return "7–6 needs a tiebreak winner";
+  return `${a}–${b} isn't a completed set (need 6–0…6–4, 7–5 or 7–6)`;
+}
+
 export function tallySets(sets: MatchSetRow[]): { a: number; b: number } {
   return sets.reduce(
     (acc, set) => {
