@@ -509,7 +509,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <Button
                 className="ml-auto"
                 onClick={() => setFinalizeOpen(true)}
-                disabled={recordSet.isPending || finalizeMatch.isPending || !hasAnyGames}
+                disabled={recordSet.isPending || finalizeMatch.isPending || !hasAnyGames || Boolean(finalizeIssue)}
               >
                 End match
               </Button>
