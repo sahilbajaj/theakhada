@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  Shield,
   ShieldCheck,
   Sun,
   Swords,
@@ -31,6 +32,7 @@ const primaryNav = [
   { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/seeding", label: "Seeding", icon: ListOrdered, adminOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
+  { to: "/superadmin", label: "Superadmin", icon: Shield, superadminOnly: true },
 ];
 
 const comingSoonNav = [
@@ -39,13 +41,15 @@ const comingSoonNav = [
 ];
 
 function NavItems({ compact = false }: { compact?: boolean }) {
-  const { role } = useAuth();
+  const { role, isSuperadmin } = useAuth();
   const isAdmin = role === "owner" || role === "admin";
 
   return (
     <div className={cn("grid gap-4", compact && "gap-0")}>
       <nav className={cn("grid gap-1", compact && "flex justify-around gap-0")}>
-        {primaryNav.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+        {primaryNav
+          .filter((item) => (!item.adminOnly || isAdmin) && (!item.superadminOnly || isSuperadmin))
+          .map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
