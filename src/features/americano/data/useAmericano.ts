@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type {
   AmericanoPoints,
   AmericanoTournamentDetail,
@@ -11,11 +12,12 @@ const LIST_KEY = ["americano", "list"] as const;
 const detailKey = (id: string) => ["americano", "detail", id] as const;
 
 export function useAmericanoTournaments() {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: LIST_KEY,
-    enabled: Boolean(supabase),
+    queryKey: [...LIST_KEY, clubId],
+    enabled: Boolean(supabase && clubId),
     queryFn: async (): Promise<AmericanoTournamentSummary[]> => {
-      const { data, error } = await supabase!.rpc("list_americano_tournaments" as never);
+      const { data, error } = await supabase!.rpc("list_americano_tournaments" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return (data as AmericanoTournamentSummary[] | null) ?? [];
     },
@@ -45,10 +47,12 @@ interface CreateTournamentInput {
 }
 
 export function useCreateAmericanoTournament() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateTournamentInput): Promise<string> => {
       const { data, error } = await supabase!.rpc("create_americano_tournament" as never, {
+        p_club_id: clubId,
         p_name: input.name,
         p_player_names: input.playerNames,
         p_points_per_match: input.pointsPerMatch,

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type {
   FormInsights,
   MilestonesInsights,
@@ -37,12 +38,13 @@ const EMPTY_PARTICIPATION: ParticipationInsights = {
 };
 
 export function useRivalryInsights(enabled = true) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: ["club-insights", "rivalry"],
-    enabled: Boolean(supabase) && enabled,
+    queryKey: ["club-insights", clubId, "rivalry"],
+    enabled: Boolean(supabase && clubId) && enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<RivalryInsights> => {
-      const { data, error } = await supabase!.rpc("get_club_insights_rivalry" as never);
+      const { data, error } = await supabase!.rpc("get_club_insights_rivalry" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return { ...EMPTY_RIVALRY, ...((data as Partial<RivalryInsights> | null) ?? {}) };
     },
@@ -50,12 +52,13 @@ export function useRivalryInsights(enabled = true) {
 }
 
 export function useFormInsights(enabled = true) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: ["club-insights", "form"],
-    enabled: Boolean(supabase) && enabled,
+    queryKey: ["club-insights", clubId, "form"],
+    enabled: Boolean(supabase && clubId) && enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<FormInsights> => {
-      const { data, error } = await supabase!.rpc("get_club_insights_form" as never);
+      const { data, error } = await supabase!.rpc("get_club_insights_form" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return { ...EMPTY_FORM, ...((data as Partial<FormInsights> | null) ?? {}) };
     },
@@ -63,12 +66,13 @@ export function useFormInsights(enabled = true) {
 }
 
 export function useStyleInsights(enabled = true) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: ["club-insights", "style"],
-    enabled: Boolean(supabase) && enabled,
+    queryKey: ["club-insights", clubId, "style"],
+    enabled: Boolean(supabase && clubId) && enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<StyleInsights> => {
-      const { data, error } = await supabase!.rpc("get_club_insights_style" as never);
+      const { data, error } = await supabase!.rpc("get_club_insights_style" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return { ...EMPTY_STYLE, ...((data as Partial<StyleInsights> | null) ?? {}) };
     },
@@ -76,12 +80,13 @@ export function useStyleInsights(enabled = true) {
 }
 
 export function useParticipationInsights(enabled = true) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: ["club-insights", "participation"],
-    enabled: Boolean(supabase) && enabled,
+    queryKey: ["club-insights", clubId, "participation"],
+    enabled: Boolean(supabase && clubId) && enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<ParticipationInsights> => {
-      const { data, error } = await supabase!.rpc("get_club_insights_participation" as never);
+      const { data, error } = await supabase!.rpc("get_club_insights_participation" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return {
         ...EMPTY_PARTICIPATION,
@@ -92,12 +97,13 @@ export function useParticipationInsights(enabled = true) {
 }
 
 export function useMilestonesInsights(enabled = true) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: ["club-insights", "milestones"],
-    enabled: Boolean(supabase) && enabled,
+    queryKey: ["club-insights", clubId, "milestones"],
+    enabled: Boolean(supabase && clubId) && enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<MilestonesInsights> => {
-      const { data, error } = await supabase!.rpc("get_club_insights_milestones" as never);
+      const { data, error } = await supabase!.rpc("get_club_insights_milestones" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       const raw = (data as Partial<MilestonesInsights> | null) ?? {};
       return { items: raw.items ?? [] };

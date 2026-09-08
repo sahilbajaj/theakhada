@@ -72,6 +72,7 @@ interface ClubSettings {
 const assignableRoles: Exclude<MemberRole, "owner">[] = ["admin", "coach", "player", "guest"];
 
 function MemberEditDialog({ member }: { member: ClubMember }) {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState(member.full_name);
@@ -96,6 +97,7 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
       }
       if (trimmedFullName !== member.full_name) {
         const { error } = await supabase!.rpc("set_member_full_name" as never, {
+          p_club_id: clubId,
           p_profile_id: member.profile_id,
           p_full_name: trimmedFullName,
         } as never);
@@ -108,6 +110,7 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
 
       if (nextNickname !== currentNickname) {
         const { error } = await supabase!.rpc("set_member_nickname" as never, {
+          p_club_id: clubId,
           p_profile_id: member.profile_id,
           p_nickname: nextNickname,
         } as never);
@@ -120,6 +123,7 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
       }
       if (parsedRating != null && parsedRating !== member.rating) {
         const { error } = await supabase!.rpc("set_member_rating" as never, {
+          p_club_id: clubId,
           p_profile_id: member.profile_id,
           p_rating: parsedRating,
         } as never);
@@ -131,6 +135,7 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
       const currentAvatar = member.avatar_url ?? null;
       if (nextAvatar !== currentAvatar) {
         const { error } = await supabase!.rpc("set_member_avatar" as never, {
+          p_club_id: clubId,
           p_profile_id: member.profile_id,
           p_avatar_url: nextAvatar,
         } as never);
@@ -185,6 +190,7 @@ function MemberEditDialog({ member }: { member: ClubMember }) {
 }
 
 function AddGuestPanel() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   const [guestName, setGuestName] = useState("");
 
@@ -192,7 +198,7 @@ function AddGuestPanel() {
     mutationFn: async () => {
       const trimmed = guestName.trim();
       if (!trimmed.length) throw new Error("Guest name is required");
-      const { error } = await supabase!.rpc("create_guest_member" as never, { p_full_name: trimmed } as never);
+      const { error } = await supabase!.rpc("create_guest_member" as never, { p_club_id: clubId, p_full_name: trimmed } as never);
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -235,12 +241,14 @@ function AddGuestPanel() {
 
 
 function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; preferNicknames: boolean }) {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const roleMutation = useMutation({
     mutationFn: async (nextRole: MemberRole) => {
       const { error } = await supabase!.rpc("set_member_role" as never, {
+        p_club_id: clubId,
         p_profile_id: member.profile_id,
         p_role: nextRole,
       } as never);
@@ -256,6 +264,7 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
   const deleteMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase!.rpc("delete_player" as never, {
+        p_club_id: clubId,
         p_profile_id: member.profile_id,
       } as never);
       if (error) throw error;
@@ -431,6 +440,7 @@ export default function Admin() {
   const preferNicknamesMutation = useMutation({
     mutationFn: async (nextValue: boolean) => {
       const { error } = await supabase!.rpc("set_club_prefer_nicknames" as never, {
+        p_club_id: clubId,
         p_value: nextValue,
       } as never);
       if (error) throw error;
@@ -457,10 +467,10 @@ export default function Admin() {
   });
 
   const membersQuery = useQuery({
-    queryKey: ["club-members"],
-    enabled: isAdmin && Boolean(supabase),
+    queryKey: ["club-members", clubId],
+    enabled: isAdmin && Boolean(supabase && clubId),
     queryFn: async (): Promise<ClubMember[]> => {
-      const { data, error } = await supabase!.rpc("list_club_members" as never);
+      const { data, error } = await supabase!.rpc("list_club_members" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return (data as ClubMember[] | null) ?? [];
     },

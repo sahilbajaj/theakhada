@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type {
   GeneratedRRMatch,
   RoundRobinFormat,
@@ -13,11 +14,12 @@ const LIST_KEY = ["roundrobin", "list"] as const;
 const detailKey = (id: string) => ["roundrobin", "detail", id] as const;
 
 export function useRoundRobinTournaments() {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: LIST_KEY,
-    enabled: Boolean(supabase),
+    queryKey: [...LIST_KEY, clubId],
+    enabled: Boolean(supabase && clubId),
     queryFn: async (): Promise<RoundRobinTournamentSummary[]> => {
-      const { data, error } = await supabase!.rpc("list_roundrobin_tournaments" as never);
+      const { data, error } = await supabase!.rpc("list_roundrobin_tournaments" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return (data as RoundRobinTournamentSummary[] | null) ?? [];
     },
@@ -52,10 +54,12 @@ interface CreateInput {
 }
 
 export function useCreateRoundRobinTournament() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateInput): Promise<string> => {
       const { data, error } = await supabase!.rpc("create_roundrobin_tournament" as never, {
+        p_club_id: clubId,
         p_name: input.name,
         p_team_names: input.teamNames,
         p_group_assignments: input.groupAssignments,

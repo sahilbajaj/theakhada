@@ -1,11 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useSetAllSeeds() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (orderedProfileIds: string[]): Promise<void> => {
       const { error } = await supabase!.rpc("set_all_seeds" as never, {
+        p_club_id: clubId,
         p_profile_ids: orderedProfileIds,
       } as never);
       if (error) throw error;
@@ -18,10 +21,11 @@ export function useSetAllSeeds() {
 }
 
 export function useClearAllSeeds() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (): Promise<void> => {
-      const { error } = await supabase!.rpc("clear_all_seeds" as never);
+      const { error } = await supabase!.rpc("clear_all_seeds" as never, { p_club_id: clubId } as never);
       if (error) throw error;
     },
     onSuccess: async () => {

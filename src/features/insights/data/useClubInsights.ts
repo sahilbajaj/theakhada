@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ClubInsights } from "@/features/insights/types";
 
 const EMPTY: ClubInsights = {
@@ -12,12 +13,13 @@ const EMPTY: ClubInsights = {
 };
 
 export function useClubInsights() {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: ["club-insights"],
-    enabled: Boolean(supabase),
+    queryKey: ["club-insights", clubId],
+    enabled: Boolean(supabase && clubId),
     staleTime: 60_000,
     queryFn: async (): Promise<ClubInsights> => {
-      const { data, error } = await supabase!.rpc("get_club_insights" as never);
+      const { data, error } = await supabase!.rpc("get_club_insights" as never, { p_club_id: clubId } as never);
       if (error) throw error;
       return { ...EMPTY, ...((data as Partial<ClubInsights> | null) ?? {}) };
     },

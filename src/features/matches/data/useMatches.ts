@@ -1,16 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { BestOf, MatchFormat, MatchListItem, SuspendReason } from "@/features/matches/types";
 
 const MATCHES_KEY = ["matches", "recent"] as const;
 const UNREVIEWED_KEY = ["matches", "unreviewed"] as const;
 
 export function useRecentMatches(limit = 25) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: [...MATCHES_KEY, limit],
-    enabled: Boolean(supabase),
+    queryKey: [...MATCHES_KEY, clubId, limit],
+    enabled: Boolean(supabase && clubId),
     queryFn: async (): Promise<MatchListItem[]> => {
-      const { data, error } = await supabase!.rpc("list_recent_matches" as never, { p_limit: limit } as never);
+      const { data, error } = await supabase!.rpc("list_recent_matches" as never, { p_club_id: clubId, p_limit: limit } as never);
       if (error) throw error;
       return (data as MatchListItem[] | null) ?? [];
     },
@@ -18,11 +20,12 @@ export function useRecentMatches(limit = 25) {
 }
 
 export function useUnreviewedMatches(enabled: boolean, limit = 200) {
+  const { clubId } = useAuth();
   return useQuery({
-    queryKey: [...UNREVIEWED_KEY, limit],
-    enabled: Boolean(supabase) && enabled,
+    queryKey: [...UNREVIEWED_KEY, clubId, limit],
+    enabled: Boolean(supabase && clubId) && enabled,
     queryFn: async (): Promise<MatchListItem[]> => {
-      const { data, error } = await supabase!.rpc("list_unreviewed_matches" as never, { p_limit: limit } as never);
+      const { data, error } = await supabase!.rpc("list_unreviewed_matches" as never, { p_club_id: clubId, p_limit: limit } as never);
       if (error) throw error;
       return (data as MatchListItem[] | null) ?? [];
     },
@@ -35,10 +38,11 @@ async function invalidateMatchViews(queryClient: ReturnType<typeof useQueryClien
 }
 
 export function useReviewMatch() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (matchId: string): Promise<void> => {
-      const { error } = await supabase!.rpc("review_match" as never, { p_match_id: matchId } as never);
+      const { error } = await supabase!.rpc("review_match" as never, { p_club_id: clubId, p_match_id: matchId } as never);
       if (error) throw error;
     },
     onSuccess: () => invalidateMatchViews(queryClient),
@@ -46,10 +50,11 @@ export function useReviewMatch() {
 }
 
 export function useReviewDay() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (day: string): Promise<number> => {
-      const { data, error } = await supabase!.rpc("review_matches_for_day" as never, { p_day: day } as never);
+      const { data, error } = await supabase!.rpc("review_matches_for_day" as never, { p_club_id: clubId, p_day: day } as never);
       if (error) throw error;
       return (data as number | null) ?? 0;
     },
@@ -66,10 +71,12 @@ interface CreateMatchInput {
 }
 
 export function useCreateMatch() {
+  const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateMatchInput): Promise<string> => {
       const { data, error } = await supabase!.rpc("create_match" as never, {
+        p_club_id: clubId,
         p_format: input.format,
         p_side_a: input.sideA,
         p_side_b: input.sideB,
