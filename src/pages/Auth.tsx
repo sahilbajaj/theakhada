@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ function GoogleMark() {
 export default function Auth() {
   const { accessStatus, signInWithGoogle, signInWithMagicLink } = useAuth();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const joinClubId = searchParams.get("club");
   const from = typeof location.state === "object" && location.state && "from" in location.state
     ? String(location.state.from)
     : "/app";
@@ -60,6 +62,7 @@ export default function Auth() {
       const { error } = await supabase!.rpc("request_access" as never, {
         p_email: requestEmail,
         p_full_name: fullName,
+        p_club_id: joinClubId ?? null,
       } as never);
       if (error) throw error;
       toast.success("Request sent", { description: "An admin can approve your access from the Admin page." });

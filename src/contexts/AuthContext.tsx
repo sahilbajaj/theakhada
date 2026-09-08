@@ -18,6 +18,7 @@ interface AuthContextValue {
   setCurrentClubId: (clubId: string) => void;
   role: MemberRole | null;
   clubId: string | null;
+  isSuperadmin: boolean;
   accessStatus: AccessStatus;
   isConfigured: boolean;
   isLoading: boolean;
@@ -44,6 +45,7 @@ interface AccessRow {
   full_name: string | null;
   email: string | null;
   has_membership: boolean;
+  is_superadmin: boolean;
 }
 
 const CURRENT_CLUB_STORAGE_KEY = "akhada.currentClubId";
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<AccessProfile | null>(null);
   const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [currentClubId, setCurrentClubIdState] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return window.localStorage.getItem(CURRENT_CLUB_STORAGE_KEY);
@@ -78,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!nextSession) {
       setProfile(null);
       setMemberships([]);
+      setIsSuperadmin(false);
       setAccessStatus("unauthenticated");
       setIsLoading(false);
       return;
@@ -89,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error(error);
       setProfile(null);
       setMemberships([]);
+      setIsSuperadmin(false);
       setAccessStatus("pending");
       setIsLoading(false);
       return;
@@ -113,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }));
 
     setMemberships(nextMemberships);
+    setIsSuperadmin(Boolean(first?.is_superadmin));
     setAccessStatus(nextMemberships.length > 0 ? "approved" : "pending");
 
     setCurrentClubIdState((prev) => {
@@ -161,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.localStorage.removeItem(CURRENT_CLUB_STORAGE_KEY);
     }
     setCurrentClubIdState(null);
+    setIsSuperadmin(false);
   }, []);
 
   useEffect(() => {
@@ -197,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentClubId,
     role: currentMembership?.role ?? null,
     clubId: currentMembership?.clubId ?? null,
+    isSuperadmin,
     accessStatus,
     isConfigured: hasSupabaseConfig,
     isLoading,
@@ -210,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     currentClubId,
     currentMembership,
     isLoading,
+    isSuperadmin,
     memberships,
     profile,
     refreshAccess,

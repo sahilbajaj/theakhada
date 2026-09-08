@@ -15,11 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { MemberRole } from "@/types/club";
 
 const inviteRoles: MemberRole[] = ["admin", "coach", "player", "guest"];
 
 export function InviteDialog() {
+  const { clubId } = useAuth();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<MemberRole>("player");
@@ -33,6 +35,7 @@ export function InviteDialog() {
     try {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase!.rpc("create_invite" as never, {
+        p_club_id: clubId,
         p_email: email,
         p_role: role,
         p_expires_at: expiresAt,

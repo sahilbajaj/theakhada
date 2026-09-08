@@ -1,9 +1,10 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function PendingAccess() {
-  const { profile, signOut, user } = useAuth();
+  const { profile, signOut, user, isSuperadmin } = useAuth();
   const email = profile?.email || user?.email || "this account";
 
   return (
@@ -12,9 +13,17 @@ export default function PendingAccess() {
         <div className="rounded-xl border border-border/60 bg-card p-5 shadow-card">
           <h1 className="text-xl font-semibold">Access pending</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {email} is signed in, but it does not have an approved The Akhada membership yet.
+            {email} is signed in, but does not have an approved club membership yet.
           </p>
-          <Button className="mt-5" variant="outline" onClick={() => void signOut()}>
+          {isSuperadmin ? (
+            <Button asChild className="mt-5">
+              <Link to="/superadmin">
+                <Shield className="mr-2 h-4 w-4" />
+                Open superadmin console
+              </Link>
+            </Button>
+          ) : null}
+          <Button className="mt-3" variant="outline" onClick={() => void signOut()}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
