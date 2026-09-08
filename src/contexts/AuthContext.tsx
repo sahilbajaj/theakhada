@@ -3,10 +3,19 @@ import type { Session, User } from "@supabase/supabase-js";
 import { hasSupabaseConfig, supabase } from "@/integrations/supabase/client";
 import type { MemberRole } from "@/types/club";
 
+export interface Membership {
+  clubId: string;
+  clubName: string;
+  role: MemberRole;
+}
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   profile: AccessProfile | null;
+  memberships: Membership[];
+  currentClubId: string | null;
+  setCurrentClubId: (clubId: string) => void;
   role: MemberRole | null;
   clubId: string | null;
   accessStatus: AccessStatus;
@@ -30,21 +39,34 @@ interface AccessProfile {
 interface AccessRow {
   profile_id: string | null;
   club_id: string | null;
+  club_name: string | null;
   role: MemberRole | null;
   full_name: string | null;
   email: string | null;
   has_membership: boolean;
 }
 
+const CURRENT_CLUB_STORAGE_KEY = "akhada.currentClubId";
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<AccessProfile | null>(null);
-  const [role, setRole] = useState<MemberRole | null>(null);
-  const [clubId, setClubId] = useState<string | null>(null);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [currentClubId, setCurrentClubIdState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(CURRENT_CLUB_STORAGE_KEY);
+  });
   const [accessStatus, setAccessStatus] = useState<AccessStatus>(hasSupabaseConfig ? "loading" : "demo");
   const [isLoading, setIsLoading] = useState(hasSupabaseConfig);
+
+  const setCurrentClubId = useCallback((clubId: string) => {
+    setCurrentClubIdState(clubId);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(CURRENT_CLUB_STORAGE_KEY, clubId);
+    }
+  }, []);
 
   const loadAccess = useCallback(async (nextSession: Session | null) => {
     if (!supabase) {
@@ -55,8 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!nextSession) {
       setProfile(null);
-      setRole(null);
-      setClubId(null);
+      setMemberships([]);
       setAccessStatus("unauthenticated");
       setIsLoading(false);
       return;
@@ -67,22 +88,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error(error);
       setProfile(null);
-      setRole(null);
-      setClubId(null);
+      setMemberships([]);
       setAccessStatus("pending");
       setIsLoading(false);
       return;
     }
 
-    const access = (data?.[0] ?? null) as AccessRow | null;
-    setProfile(access?.profile_id ? {
-      id: access.profile_id,
-      fullName: access.full_name ?? access.email ?? "Member",
-      email: access.email ?? nextSession.user.email ?? "",
+    const rows = (data ?? []) as AccessRow[];
+    const first = rows[0] ?? null;
+
+    setProfile(first?.profile_id ? {
+      id: first.profile_id,
+      fullName: first.full_name ?? first.email ?? "Member",
+      email: first.email ?? nextSession.user.email ?? "",
     } : null);
-    setRole(access?.role ?? null);
-    setClubId(access?.club_id ?? null);
-    setAccessStatus(access?.has_membership ? "approved" : "pending");
+
+    const nextMemberships: Membership[] = rows
+      .filter((r): r is AccessRow & { club_id: string; role: MemberRole; club_name: string } =>
+        Boolean(r.has_membership && r.club_id && r.role))
+      .map((r) => ({
+        clubId: r.club_id,
+        clubName: r.club_name ?? "",
+        role: r.role,
+      }));
+
+    setMemberships(nextMemberships);
+    setAccessStatus(nextMemberships.length > 0 ? "approved" : "pending");
+
+    setCurrentClubIdState((prev) => {
+      if (prev && nextMemberships.some((m) => m.clubId === prev)) return prev;
+      const fallback = nextMemberships[0]?.clubId ?? null;
+      if (typeof window !== "undefined") {
+        if (fallback) window.localStorage.setItem(CURRENT_CLUB_STORAGE_KEY, fallback);
+        else window.localStorage.removeItem(CURRENT_CLUB_STORAGE_KEY);
+      }
+      return fallback;
+    });
+
     setIsLoading(false);
   }, []);
 
@@ -115,6 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(CURRENT_CLUB_STORAGE_KEY);
+    }
+    setCurrentClubIdState(null);
   }, []);
 
   useEffect(() => {
@@ -137,12 +183,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, [loadAccess]);
 
+  const currentMembership = useMemo(
+    () => memberships.find((m) => m.clubId === currentClubId) ?? null,
+    [memberships, currentClubId],
+  );
+
   const value = useMemo<AuthContextValue>(() => ({
     user: session?.user ?? null,
     session,
     profile,
-    role,
-    clubId,
+    memberships,
+    currentClubId,
+    setCurrentClubId,
+    role: currentMembership?.role ?? null,
+    clubId: currentMembership?.clubId ?? null,
     accessStatus,
     isConfigured: hasSupabaseConfig,
     isLoading,
@@ -151,7 +205,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     signOut,
     refreshAccess,
-  }), [accessStatus, clubId, isLoading, profile, refreshAccess, role, session, signInWithGoogle, signInWithMagicLink, signOut]);
+  }), [
+    accessStatus,
+    currentClubId,
+    currentMembership,
+    isLoading,
+    memberships,
+    profile,
+    refreshAccess,
+    session,
+    setCurrentClubId,
+    signInWithGoogle,
+    signInWithMagicLink,
+    signOut,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
