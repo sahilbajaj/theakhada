@@ -85,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     const { data, error } = await supabase.rpc("claim_current_access" as never);
-    console.log("[claim_current_access]", { data, error });
     if (error) {
       console.error(error);
       setProfile(null);
