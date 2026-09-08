@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AcceptInvite() {
-  const { accessStatus, profile, refreshAccess, session, signInWithGoogle, signInWithMagicLink } = useAuth();
+  const { profile, refreshAccess, session, signInWithGoogle, signInWithMagicLink } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token") ?? "";
@@ -19,7 +19,6 @@ export default function AcceptInvite() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!token) return <Navigate to="/auth" replace />;
-  if (accessStatus === "approved") return <Navigate to="/app" replace />;
 
   async function submitMagicLink(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
