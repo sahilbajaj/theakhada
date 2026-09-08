@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { ClubPicker } from "@/components/ClubPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { NotificationBell } from "@/features/notifications/ui/NotificationBell";
@@ -161,6 +162,7 @@ export function AppShell() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ClubPicker />
               {isLoading ? <Badge variant="outline">Syncing</Badge> : null}
               {profile ? (
                 <Badge variant="outline" className="hidden max-w-[220px] truncate capitalize sm:inline-flex">
