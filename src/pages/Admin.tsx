@@ -276,10 +276,10 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["club-members"] });
       await queryClient.invalidateQueries({ queryKey: ["club-roster"] });
-      toast.success("Player deleted");
+      toast.success("Member removed from club");
       setDeleteOpen(false);
     },
-    onError: (error) => toast.error("Could not delete player", { description: error instanceof Error ? error.message : "Try again." }),
+    onError: (error) => toast.error("Could not remove member", { description: error instanceof Error ? error.message : "Try again." }),
   });
 
   const roleLocked = member.role === "owner" || member.is_self;
@@ -327,7 +327,7 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
           <Button
             size="icon"
             variant="ghost"
-            aria-label="Delete player"
+            aria-label="Remove from club"
             onClick={() => setDeleteOpen(true)}
             disabled={deleteMutation.isPending}
           >
@@ -338,15 +338,15 @@ function MemberRoleRow({ member, preferNicknames }: { member: ClubMember; prefer
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {member.full_name}?</AlertDialogTitle>
+            <AlertDialogTitle>Remove {member.full_name} from this club?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes their profile, match participation, notifications, and login. This cannot be undone.
+              They'll lose their membership and role here. If this is their only club, their profile and login are deleted too. Their memberships in other clubs are unaffected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
-              Delete player
+              Remove from club
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
