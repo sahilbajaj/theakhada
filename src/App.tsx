@@ -45,6 +45,7 @@ export default function App() {
           <Route path="/seeding" element={<Seeding />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/explore" element={<JoinClubs variant="embedded" />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>
       </Route>
