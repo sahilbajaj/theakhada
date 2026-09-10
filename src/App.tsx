@@ -20,8 +20,10 @@ import Landing from "@/pages/Landing";
 import Privacy from "@/pages/Privacy";
 import Superadmin from "@/pages/Superadmin";
 import Terms from "@/pages/Terms";
+import { usePwaUpdates } from "@/hooks/usePwaUpdates";
 
 export default function App() {
+  usePwaUpdates();
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
