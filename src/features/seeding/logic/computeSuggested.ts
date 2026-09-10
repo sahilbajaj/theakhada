@@ -1,5 +1,6 @@
 import type { MatchListItem } from "@/features/matches/types";
 import type { RosterMember } from "@/hooks/useClubRoster";
+import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 
 const RATING_WEIGHT = 0.4;
 const FORM_WEIGHT = 0.45;
@@ -9,15 +10,19 @@ const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000; // two weeks
 interface Scored {
   profile_id: string;
   score: number;
+  played: boolean;
 }
 
 // suggestedOrder returns an ordered list of profile_ids (best first) based on
-// rating, dominance-weighted form across all finalized matches (14-day
-// per-match half-life), and how recently the member played. Pure — feed it
-// the same inputs and get the same output.
+// rating, dominance-weighted form across finalized matches in the requested
+// format (14-day per-match half-life), and how recently the member played.
+// For "singles"/"doubles" formats, members who haven't played that format are
+// excluded from the result. Pure — feed it the same inputs and get the same
+// output.
 export function suggestedOrder(
   members: RosterMember[],
   matches: MatchListItem[],
+  format: SeedFormat = "combined",
   now: Date = new Date(),
 ): string[] {
   if (!members.length) return [];
@@ -29,9 +34,11 @@ export function suggestedOrder(
     let weightedDominance = 0;
     let totalWeight = 0;
     let mostRecentMs: number | null = null;
+    let played = false;
 
     for (const match of matches) {
       if (match.status !== "final") continue;
+      if (format !== "combined" && match.format !== format) continue;
       const onA = match.side_a.some((p) => p.profile_id === member.profile_id);
       const onB = !onA && match.side_b.some((p) => p.profile_id === member.profile_id);
       if (!onA && !onB) continue;
@@ -50,6 +57,7 @@ export function suggestedOrder(
       const weight = Math.pow(0.5, ageMs / HALF_LIFE_MS);
       weightedDominance += dominance * weight;
       totalWeight += weight;
+      played = true;
 
       const matchMs = new Date(match.starts_at).getTime();
       if (mostRecentMs == null || matchMs > mostRecentMs) mostRecentMs = matchMs;
@@ -62,9 +70,10 @@ export function suggestedOrder(
     const rating = member.rating ?? 0;
 
     const score = rating * RATING_WEIGHT + form * 5 * FORM_WEIGHT + recency * RECENCY_WEIGHT;
-    return { profile_id: member.profile_id, score };
+    return { profile_id: member.profile_id, score, played };
   });
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.map((s) => s.profile_id);
+  const filtered = format === "combined" ? scored : scored.filter((s) => s.played);
+  filtered.sort((a, b) => b.score - a.score);
+  return filtered.map((s) => s.profile_id);
 }

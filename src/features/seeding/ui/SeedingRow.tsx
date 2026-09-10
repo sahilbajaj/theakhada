@@ -12,12 +12,13 @@ interface Props {
   member: RosterMember;
   currentSeed: number;
   suggestedSeed?: number;
+  priorSeed: number | null;
   preferNicknames: boolean;
   editable: boolean;
 }
 
 export const SeedingRow = forwardRef<HTMLDivElement, Props>(function SeedingRow(
-  { member, currentSeed, suggestedSeed, preferNicknames, editable },
+  { member, currentSeed, suggestedSeed, priorSeed, preferNicknames, editable },
   _ref,
 ) {
   const sortable = useSortable({ id: member.profile_id, disabled: !editable });
@@ -65,7 +66,7 @@ export const SeedingRow = forwardRef<HTMLDivElement, Props>(function SeedingRow(
       <div className="flex shrink-0 items-center gap-2">
         {suggestionDiffers ? (
           <Badge variant="secondary" className="text-[10px]">
-            was #{member.seed ?? "—"}
+            was #{priorSeed ?? "—"}
           </Badge>
         ) : null}
         <Badge variant="outline" className="hidden w-14 justify-center tabular-nums sm:inline-flex">

@@ -18,11 +18,12 @@ interface Props {
   onOrderChange: (next: string[]) => void;
   membersById: Map<string, RosterMember>;
   suggestedSeedById: Map<string, number>;
+  priorSeedById: Map<string, number | null>;
   preferNicknames: boolean;
   editable: boolean;
 }
 
-export function SeedingBoard({ order, onOrderChange, membersById, suggestedSeedById, preferNicknames, editable }: Props) {
+export function SeedingBoard({ order, onOrderChange, membersById, suggestedSeedById, priorSeedById, preferNicknames, editable }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
@@ -56,6 +57,7 @@ export function SeedingBoard({ order, onOrderChange, membersById, suggestedSeedB
                 member={member}
                 currentSeed={index + 1}
                 suggestedSeed={suggestedSeedById.get(id)}
+                priorSeed={priorSeedById.get(id) ?? null}
                 preferNicknames={preferNicknames}
                 editable={editable}
               />
