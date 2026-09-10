@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, LogOut, Plus, Shield, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, LogOut, Plus, Shield, Users } from "lucide-react";
+import { AccessRequestRow, type SignupRequest } from "@/components/AccessRequestRow";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +12,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { MemberRole } from "@/types/club";
+
+const settableRoles: Exclude<MemberRole, "owner">[] = ["admin", "coach", "player", "guest"];
+
+interface ClubMemberRow {
+  profile_id: string;
+  club_id: string;
+  full_name: string;
+  nickname: string | null;
+  email: string;
+  role: MemberRole;
+  rating: number | null;
+  avatar_url: string | null;
+  is_self: boolean;
+}
 
 interface ClubRow {
   id: string;
@@ -157,6 +174,7 @@ function ClubsList() {
 }
 
 function ClubRowItem({ club }: { club: ClubRow }) {
+  const [expanded, setExpanded] = useState(false);
   return (
     <li className="rounded-lg border border-border/60 p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -169,7 +187,139 @@ function ClubRowItem({ club }: { club: ClubRow }) {
         <div className="text-[10px] font-mono text-muted-foreground">{club.id}</div>
       </div>
       <InviteOwnerForm clubId={club.id} clubName={club.name} />
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="mt-2 h-8 px-2 text-xs"
+        onClick={() => setExpanded((prev) => !prev)}
+      >
+        {expanded ? <ChevronDown className="mr-1 h-4 w-4" /> : <ChevronRight className="mr-1 h-4 w-4" />}
+        Manage requests & members
+      </Button>
+      {expanded ? <ClubManagePanel clubId={club.id} /> : null}
     </li>
+  );
+}
+
+function ClubManagePanel({ clubId }: { clubId: string }) {
+  const requestsKey = ["superadmin", "signup-requests", clubId] as const;
+  const membersKey = ["superadmin", "club-members", clubId] as const;
+
+  const requestsQuery = useQuery({
+    queryKey: requestsKey,
+    enabled: Boolean(supabase),
+    queryFn: async (): Promise<SignupRequest[]> => {
+      const { data, error } = await supabase!
+        .from("signup_requests" as never)
+        .select("id,email,full_name,requested_role,status,created_at")
+        .eq("club_id", clubId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data as SignupRequest[] | null) ?? [];
+    },
+  });
+
+  const membersQuery = useQuery({
+    queryKey: membersKey,
+    enabled: Boolean(supabase),
+    queryFn: async (): Promise<ClubMemberRow[]> => {
+      const { data, error } = await supabase!.rpc("list_club_members" as never, { p_club_id: clubId } as never);
+      if (error) throw error;
+      return (data as ClubMemberRow[] | null) ?? [];
+    },
+  });
+
+  const requests = requestsQuery.data ?? [];
+  const members = membersQuery.data ?? [];
+
+  return (
+    <div className="mt-3 grid gap-4 rounded-lg border border-border/40 bg-secondary/30 p-3">
+      <section className="grid gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pending requests</h3>
+        {requestsQuery.isLoading ? (
+          <p className="text-xs text-muted-foreground">Loading…</p>
+        ) : requests.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No pending requests.</p>
+        ) : (
+          requests.map((request) => (
+            <AccessRequestRow
+              key={request.id}
+              request={request}
+              invalidateKeys={[[...requestsKey], [...membersKey], ["superadmin", "clubs"]]}
+            />
+          ))
+        )}
+      </section>
+
+      <section className="grid gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Members</h3>
+        {membersQuery.isLoading ? (
+          <p className="text-xs text-muted-foreground">Loading…</p>
+        ) : members.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No members yet.</p>
+        ) : (
+          members.map((member) => (
+            <MemberRoleRow key={member.profile_id} clubId={clubId} member={member} membersKey={[...membersKey]} />
+          ))
+        )}
+      </section>
+    </div>
+  );
+}
+
+function MemberRoleRow({
+  clubId,
+  member,
+  membersKey,
+}: {
+  clubId: string;
+  member: ClubMemberRow;
+  membersKey: readonly unknown[];
+}) {
+  const queryClient = useQueryClient();
+
+  const roleMutation = useMutation({
+    mutationFn: async (nextRole: MemberRole) => {
+      const { error } = await supabase!.rpc("set_member_role" as never, {
+        p_club_id: clubId,
+        p_profile_id: member.profile_id,
+        p_role: nextRole,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKey });
+      toast.success("Role updated");
+    },
+    onError: (error) => toast.error("Could not update role", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
+  const roleLocked = member.role === "owner";
+  const primaryName = member.full_name || member.email;
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-card p-2 shadow-card">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{primaryName}</p>
+        <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+      </div>
+      {roleLocked ? (
+        <Badge variant="secondary" className="capitalize">{member.role}</Badge>
+      ) : (
+        <Select value={member.role} onValueChange={(value) => roleMutation.mutate(value as MemberRole)} disabled={roleMutation.isPending}>
+          <SelectTrigger className="h-8 w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {settableRoles.map((item) => (
+              <SelectItem key={item} value={item} className="capitalize">{item}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
   );
 }
 
