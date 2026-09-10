@@ -12,13 +12,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useClubRoster, type RosterMember } from "@/hooks/useClubRoster";
-import { useClubSettings } from "@/hooks/useClubSettings";
-import { useRecentMatches } from "@/features/matches/data/useMatches";
+import type { RosterMember } from "@/hooks/useClubRoster";
 import { useClearAllSeeds, useSetAllSeeds, type SeedFormat } from "@/features/seeding/data/useSeeding";
 import { suggestedOrder } from "@/features/seeding/logic/computeSuggested";
 import { SeedingBoard } from "@/features/seeding/ui/SeedingBoard";
@@ -30,7 +25,7 @@ const FORMAT_LABEL: Record<SeedFormat, string> = {
   doubles: "Doubles",
 };
 
-function seedFor(member: RosterMember, format: SeedFormat): number | null {
+export function seedFor(member: RosterMember, format: SeedFormat): number | null {
   if (format === "singles") return member.singles_seed;
   if (format === "doubles") return member.doubles_seed;
   return member.seed;
@@ -57,7 +52,7 @@ function initialOrder(
   return [...seededIds, ...unseededSuggestion, ...orphanUnseeded];
 }
 
-interface PaneProps {
+interface Props {
   format: SeedFormat;
   roster: RosterMember[];
   matches: MatchListItem[];
@@ -65,7 +60,7 @@ interface PaneProps {
   isAdmin: boolean;
 }
 
-function SeedingPane({ format, roster, matches, preferNicknames, isAdmin }: PaneProps) {
+export function SeedingPane({ format, roster, matches, preferNicknames, isAdmin }: Props) {
   const setAllSeeds = useSetAllSeeds();
   const clearAllSeeds = useClearAllSeeds();
 
@@ -200,79 +195,6 @@ function SeedingPane({ format, roster, matches, preferNicknames, isAdmin }: Pane
           editable={isAdmin}
         />
       )}
-    </div>
-  );
-}
-
-export default function Seeding() {
-  const { role } = useAuth();
-  const isAdmin = role === "owner" || role === "admin";
-  const rosterQuery = useClubRoster();
-  const matchesQuery = useRecentMatches(200);
-  const { preferNicknames } = useClubSettings();
-
-  const roster = useMemo(
-    () => (rosterQuery.data ?? []).filter((m) => m.role !== "guest"),
-    [rosterQuery.data],
-  );
-  const matches = matchesQuery.data ?? [];
-
-  const [format, setFormat] = useState<SeedFormat>("combined");
-
-  return (
-    <div className="grid gap-4">
-      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
-        <h2 className="text-xl font-semibold">Seeding</h2>
-        <p className="text-sm text-muted-foreground">
-          Seeds recompute automatically as matches finalize (rating + recent form + recency). Drag and Save to override until the next match settles.
-        </p>
-      </section>
-
-      <Tabs value={format} onValueChange={(v) => setFormat(v as SeedFormat)}>
-        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">
-          <TabsTrigger value="combined">Combined</TabsTrigger>
-          <TabsTrigger value="singles">Singles</TabsTrigger>
-          <TabsTrigger value="doubles">Doubles</TabsTrigger>
-        </TabsList>
-
-        {rosterQuery.isLoading || matchesQuery.isLoading ? (
-          <div className="mt-4 grid gap-2">
-            <Skeleton className="h-14 rounded-lg" />
-            <Skeleton className="h-14 rounded-lg" />
-            <Skeleton className="h-14 rounded-lg" />
-          </div>
-        ) : (
-          <>
-            <TabsContent value="combined" className="mt-4">
-              <SeedingPane
-                format="combined"
-                roster={roster}
-                matches={matches}
-                preferNicknames={preferNicknames}
-                isAdmin={isAdmin}
-              />
-            </TabsContent>
-            <TabsContent value="singles" className="mt-4">
-              <SeedingPane
-                format="singles"
-                roster={roster}
-                matches={matches}
-                preferNicknames={preferNicknames}
-                isAdmin={isAdmin}
-              />
-            </TabsContent>
-            <TabsContent value="doubles" className="mt-4">
-              <SeedingPane
-                format="doubles"
-                roster={roster}
-                matches={matches}
-                preferNicknames={preferNicknames}
-                isAdmin={isAdmin}
-              />
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
     </div>
   );
 }

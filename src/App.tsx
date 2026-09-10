@@ -11,7 +11,6 @@ import Attendance from "@/pages/Attendance";
 import Tournaments from "@/pages/Tournaments";
 import Players from "@/pages/Players";
 import PlayerDetail from "@/pages/PlayerDetail";
-import Seeding from "@/pages/Seeding";
 import Admin from "@/pages/Admin";
 import Insights from "@/pages/Insights";
 import Auth from "@/pages/Auth";
@@ -44,7 +43,7 @@ export default function App() {
           <Route path="/tournaments" element={<Tournaments />} />
           <Route path="/players" element={<Players />} />
           <Route path="/players/:profileId" element={<PlayerDetail />} />
-          <Route path="/seeding" element={<Seeding />} />
+          <Route path="/seeding" element={<Navigate to="/players" replace />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/explore" element={<JoinClubs variant="embedded" />} />

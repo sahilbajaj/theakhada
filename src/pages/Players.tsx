@@ -1,29 +1,51 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { ListOrdered, Search, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { useRecentMatches } from "@/features/matches/data/useMatches";
 import { computeStats } from "@/features/stats/logic/computeStats";
+import type { SeedFormat } from "@/features/seeding/data/useSeeding";
+import { suggestedOrder } from "@/features/seeding/logic/computeSuggested";
+import { SeedingPane, seedFor } from "@/features/seeding/ui/SeedingPane";
 import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
 
 export default function Players() {
+  const { role } = useAuth();
+  const isAdmin = role === "owner" || role === "admin";
   const rosterQuery = useClubRoster();
-  const matchesQuery = useRecentMatches(100);
+  const matchesQuery = useRecentMatches(200);
   const { preferNicknames } = useClubSettings();
   const [query, setQuery] = useState("");
+  const [format, setFormat] = useState<SeedFormat>("combined");
+  const [mode, setMode] = useState<"view" | "manage">("view");
+
+  const roster = useMemo(
+    () => (rosterQuery.data ?? []).filter((m) => m.role !== "guest"),
+    [rosterQuery.data],
+  );
+  const matches = matchesQuery.data ?? [];
+
+  const playedIdsForFormat = useMemo(() => {
+    if (format === "combined") return null;
+    return new Set(suggestedOrder(roster, matches, format));
+  }, [roster, matches, format]);
 
   const rows = useMemo(() => {
-    const roster = rosterQuery.data ?? [];
-    const matches = matchesQuery.data ?? [];
     const q = query.trim().toLowerCase();
     return roster
       .filter((m) => {
+        if (playedIdsForFormat && seedFor(m, format) == null && !playedIdsForFormat.has(m.profile_id)) {
+          return false;
+        }
         if (!q) return true;
         return (
           m.full_name.toLowerCase().includes(q) ||
@@ -35,14 +57,16 @@ export default function Players() {
         stats: computeStats(matches, member.profile_id),
       }))
       .sort((a, b) => {
-        const sa = a.member.seed;
-        const sb = b.member.seed;
+        const sa = seedFor(a.member, format);
+        const sb = seedFor(b.member, format);
         if (sa != null && sb != null) return sa - sb;
         if (sa != null) return -1;
         if (sb != null) return 1;
         return (b.member.rating ?? 0) - (a.member.rating ?? 0);
       });
-  }, [rosterQuery.data, matchesQuery.data, query]);
+  }, [roster, matches, query, format, playedIdsForFormat]);
+
+  const managing = isAdmin && mode === "manage";
 
   return (
     <div className="grid gap-4">
@@ -50,42 +74,88 @@ export default function Players() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Players</h2>
-            <p className="text-sm text-muted-foreground">Club roster with recent form. Tap a player for their stats.</p>
+            <p className="text-sm text-muted-foreground">
+              {managing
+                ? "Drag to reorder. Save to publish."
+                : "Club roster with recent form. Tap a player for their stats."}
+            </p>
           </div>
-          <div className="relative sm:w-64">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search"
-              className="pl-8"
-            />
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            {!managing ? (
+              <div className="relative sm:w-64">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search"
+                  className="pl-8"
+                />
+              </div>
+            ) : null}
+            {isAdmin ? (
+              <Button
+                variant={managing ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode(managing ? "view" : "manage")}
+              >
+                {managing ? (
+                  <>
+                    <X className="mr-2 h-4 w-4" />
+                    Done
+                  </>
+                ) : (
+                  <>
+                    <ListOrdered className="mr-2 h-4 w-4" />
+                    Edit seeding
+                  </>
+                )}
+              </Button>
+            ) : null}
           </div>
         </div>
       </section>
 
-      {rosterQuery.isLoading ? (
+      <Tabs value={format} onValueChange={(v) => setFormat(v as SeedFormat)}>
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">
+          <TabsTrigger value="combined">Combined</TabsTrigger>
+          <TabsTrigger value="singles">Singles</TabsTrigger>
+          <TabsTrigger value="doubles">Doubles</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {rosterQuery.isLoading || matchesQuery.isLoading ? (
         <div className="grid gap-2">
           <Skeleton className="h-16 rounded-lg" />
           <Skeleton className="h-16 rounded-lg" />
           <Skeleton className="h-16 rounded-lg" />
         </div>
+      ) : managing ? (
+        <SeedingPane
+          format={format}
+          roster={roster}
+          matches={matches}
+          preferNicknames={preferNicknames}
+          isAdmin={isAdmin}
+        />
       ) : rows.length === 0 ? (
         <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
-          No matching players.
+          {format === "combined"
+            ? "No matching players."
+            : `No members have played a ${format} match yet.`}
         </div>
       ) : (
         <div className="grid gap-2">
           {rows.map(({ member, stats }) => {
             const name = displayName(member, { preferNicknames });
+            const seed = seedFor(member, format);
             return (
               <Link
                 key={member.profile_id}
                 to={`/players/${member.profile_id}`}
                 className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card transition hover:border-primary/40 hover:shadow-card-hover"
               >
-                <Badge variant={member.seed != null ? "default" : "outline"} className="w-9 shrink-0 justify-center tabular-nums">
-                  {member.seed != null ? `#${member.seed}` : "—"}
+                <Badge variant={seed != null ? "default" : "outline"} className="w-9 shrink-0 justify-center tabular-nums">
+                  {seed != null ? `#${seed}` : "—"}
                 </Badge>
                 <Avatar className="h-9 w-9 shrink-0">
                   {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}

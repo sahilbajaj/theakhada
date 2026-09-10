@@ -5,7 +5,6 @@ import {
   ClipboardCheck,
   Compass,
   LayoutDashboard,
-  ListOrdered,
   LogOut,
   Menu,
   Moon,
@@ -32,7 +31,6 @@ const primaryNav = [
   { to: "/players", label: "Players", icon: UsersRound },
   { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/explore", label: "Explore", icon: Compass, hideOnBottom: true },
-  { to: "/seeding", label: "Seeding", icon: ListOrdered, adminOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
   { to: "/superadmin", label: "Superadmin", icon: Shield, superadminOnly: true },
 ];
