@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CalendarCog, Check, Pencil, ShieldCheck, SlidersHorizontal, Trash2, UsersRound, X } from "lucide-react";
+import { Bell, CalendarCog, Check, Copy, Pencil, Share2, ShieldCheck, SlidersHorizontal, Trash2, UsersRound, X } from "lucide-react";
 import { InviteDialog } from "@/components/InviteDialog";
+import { ShareableInviteDialog } from "@/components/ShareableInviteDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +51,19 @@ interface ClubInvite {
   email: string;
   role: MemberRole;
   status: "pending" | "accepted" | "revoked";
+  expires_at: string;
+  created_at: string;
+}
+
+interface ShareableInvite {
+  id: string;
+  club_id: string | null;
+  club_name: string | null;
+  role: string;
+  status: "active" | "revoked";
+  token: string;
+  max_uses: number | null;
+  use_count: number;
   expires_at: string;
   created_at: string;
 }
@@ -417,6 +431,103 @@ function AccessRequestRow({ request }: { request: SignupRequest }) {
   );
 }
 
+function ShareableInviteRow({ invite }: { invite: ShareableInvite }) {
+  const queryClient = useQueryClient();
+  const [revokeOpen, setRevokeOpen] = useState(false);
+
+  const revokeMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase!.rpc("revoke_shareable_invite" as never, { p_invite_id: invite.id } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["shareable-invites"] });
+      toast.success("Link revoked");
+      setRevokeOpen(false);
+    },
+    onError: (error) => toast.error("Could not revoke link", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
+  const expired = new Date(invite.expires_at).getTime() <= Date.now();
+  const full = invite.max_uses != null && invite.use_count >= invite.max_uses;
+  const scope = invite.club_id ? invite.club_name ?? "Club" : "App-wide";
+  const usesLabel = invite.max_uses != null ? `${invite.use_count}/${invite.max_uses}` : `${invite.use_count} used`;
+  const inviteUrl = `${window.location.origin}/join?token=${invite.token}`;
+  const shareText = invite.club_name
+    ? `Join ${invite.club_name} on Akhada: ${inviteUrl}`
+    : `Join on Akhada: ${inviteUrl}`;
+  const usable = invite.status === "active" && !expired && !full;
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(inviteUrl);
+    toast.success("Link copied");
+  }
+
+  async function share() {
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await navigator.share({ title: "Akhada invite", text: shareText, url: inviteUrl });
+        return;
+      } catch {
+        // fall through to copy
+      }
+    }
+    await navigator.clipboard.writeText(inviteUrl);
+    toast.success("Link copied — paste it wherever you want to share");
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium">{scope}</p>
+          <Badge variant="outline" className="capitalize">{invite.role}</Badge>
+          <Badge variant={invite.status === "active" && !expired && !full ? "secondary" : "outline"} className="capitalize">
+            {invite.status === "revoked" ? "revoked" : expired ? "expired" : full ? "full" : "active"}
+          </Badge>
+        </div>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          {usesLabel} · expires {new Date(invite.expires_at).toLocaleDateString()}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 sm:shrink-0">
+        {usable ? (
+          <>
+            <Button size="sm" onClick={() => void share()}>
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+            <Button size="icon" variant="ghost" aria-label="Copy link" onClick={() => void copyLink()}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </>
+        ) : null}
+        {invite.status === "active" ? (
+          <Button size="sm" variant="outline" onClick={() => setRevokeOpen(true)} disabled={revokeMutation.isPending}>
+            Revoke
+          </Button>
+        ) : null}
+      </div>
+      <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke this link?</AlertDialogTitle>
+            <AlertDialogDescription>
+              People who already have the link will no longer be able to use it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={revokeMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => revokeMutation.mutate()} disabled={revokeMutation.isPending}>
+              Revoke
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { role, clubId } = useAuth();
   const queryClient = useQueryClient();
@@ -476,6 +587,16 @@ export default function Admin() {
     },
   });
 
+  const shareableInvitesQuery = useQuery({
+    queryKey: ["shareable-invites", clubId],
+    enabled: isAdmin && Boolean(supabase && clubId),
+    queryFn: async (): Promise<ShareableInvite[]> => {
+      const { data, error } = await supabase!.rpc("list_shareable_invites" as never, { p_club_id: clubId } as never);
+      if (error) throw error;
+      return (data as ShareableInvite[] | null) ?? [];
+    },
+  });
+
   const invitesQuery = useQuery({
     queryKey: ["club-invites"],
     enabled: isAdmin && Boolean(supabase),
@@ -507,8 +628,9 @@ export default function Admin() {
             <h2 className="text-xl font-semibold">Admin controls</h2>
             <p className="text-sm text-muted-foreground">Club rules, roles, permissions, and operating defaults.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <InviteDialog />
+            <ShareableInviteDialog />
             <Button variant="outline"><SlidersHorizontal className="mr-2 h-4 w-4" />Rules</Button>
           </div>
         </div>
@@ -582,6 +704,22 @@ export default function Admin() {
         ) : (
           <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
             {invitesQuery.isLoading ? "Loading invites..." : "No invites yet."}
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Shareable links</h2>
+          <p className="text-sm text-muted-foreground">Multi-use links anyone can redeem. Approvals still happen under Access requests.</p>
+        </div>
+        {(shareableInvitesQuery.data ?? []).length ? (
+          shareableInvitesQuery.data?.map((invite) => (
+            <ShareableInviteRow key={invite.id} invite={invite} />
+          ))
+        ) : (
+          <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
+            {shareableInvitesQuery.isLoading ? "Loading links..." : "No shareable links yet."}
           </div>
         )}
       </section>

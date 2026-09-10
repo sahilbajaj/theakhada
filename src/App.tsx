@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AccessGate } from "@/components/AccessGate";
 import { AppShell } from "@/components/AppShell";
 import AcceptInvite from "@/pages/AcceptInvite";
+import JoinWithLink from "@/pages/JoinWithLink";
+import JoinClubs from "@/pages/JoinClubs";
 import Dashboard from "@/pages/Dashboard";
 import Bookings from "@/pages/Bookings";
 import Scores from "@/pages/Scores";
@@ -26,6 +28,8 @@ export default function App() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/accept-invite" element={<AcceptInvite />} />
+      <Route path="/join" element={<JoinWithLink />} />
+      <Route path="/join-clubs" element={<JoinClubs />} />
       <Route path="/superadmin" element={<Superadmin />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />

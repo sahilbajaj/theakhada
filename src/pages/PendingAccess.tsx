@@ -1,4 +1,4 @@
-import { LogOut, Shield } from "lucide-react";
+import { LogOut, Search, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,14 @@ export default function PendingAccess() {
                 Open superadmin console
               </Link>
             </Button>
-          ) : null}
+          ) : (
+            <Button asChild className="mt-5">
+              <Link to="/join-clubs">
+                <Search className="mr-2 h-4 w-4" />
+                Browse clubs to join
+              </Link>
+            </Button>
+          )}
           <Button className="mt-3" variant="outline" onClick={() => void signOut()}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
