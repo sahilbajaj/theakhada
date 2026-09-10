@@ -1,11 +1,10 @@
-import { computeStats } from "@/features/stats/logic/computeStats";
 import type { MatchListItem } from "@/features/matches/types";
 import type { RosterMember } from "@/hooks/useClubRoster";
 
-const RATING_WEIGHT = 0.6;
-const FORM_WEIGHT = 0.3;
-const RECENCY_WEIGHT = 0.1;
-const RECENCY_HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000; // two weeks
+const RATING_WEIGHT = 0.4;
+const FORM_WEIGHT = 0.45;
+const RECENCY_WEIGHT = 0.15;
+const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000; // two weeks
 
 interface Scored {
   profile_id: string;
@@ -13,7 +12,8 @@ interface Scored {
 }
 
 // suggestedOrder returns an ordered list of profile_ids (best first) based on
-// rating, last-10 win rate, and how recently the member played. Pure — feed it
+// rating, dominance-weighted form across all finalized matches (14-day
+// per-match half-life), and how recently the member played. Pure — feed it
 // the same inputs and get the same output.
 export function suggestedOrder(
   members: RosterMember[],
@@ -23,19 +23,45 @@ export function suggestedOrder(
   if (!members.length) return [];
 
   const eligible = members.filter((m) => m.role !== "guest");
+  const nowMs = now.getTime();
 
   const scored: Scored[] = eligible.map((member) => {
-    const stats = computeStats(matches, member.profile_id, now);
-    const rating = member.rating ?? 0;
-    const decided = stats.form.length;
-    const wins = stats.form.filter((r) => r === "W").length;
-    const winRate = decided > 0 ? wins / decided : 0;
-    const mostRecent = matches
-      .find((m) => m.side_a.some((p) => p.profile_id === member.profile_id) || m.side_b.some((p) => p.profile_id === member.profile_id));
-    const recencyMs = mostRecent ? Math.max(0, now.getTime() - new Date(mostRecent.starts_at).getTime()) : Infinity;
-    const recency = Number.isFinite(recencyMs) ? Math.pow(0.5, recencyMs / RECENCY_HALF_LIFE_MS) : 0;
+    let weightedDominance = 0;
+    let totalWeight = 0;
+    let mostRecentMs: number | null = null;
 
-    const score = rating * RATING_WEIGHT + winRate * 5 * FORM_WEIGHT + recency * RECENCY_WEIGHT;
+    for (const match of matches) {
+      if (match.status !== "final") continue;
+      const onA = match.side_a.some((p) => p.profile_id === member.profile_id);
+      const onB = !onA && match.side_b.some((p) => p.profile_id === member.profile_id);
+      if (!onA && !onB) continue;
+
+      let gamesA = 0;
+      let gamesB = 0;
+      for (const set of match.sets) {
+        gamesA += set.side_a_games;
+        gamesB += set.side_b_games;
+      }
+      const total = gamesA + gamesB;
+      if (total <= 0) continue;
+
+      const dominance = onA ? (gamesA - gamesB) / total : (gamesB - gamesA) / total;
+      const ageMs = Math.max(0, nowMs - new Date(match.starts_at).getTime());
+      const weight = Math.pow(0.5, ageMs / HALF_LIFE_MS);
+      weightedDominance += dominance * weight;
+      totalWeight += weight;
+
+      const matchMs = new Date(match.starts_at).getTime();
+      if (mostRecentMs == null || matchMs > mostRecentMs) mostRecentMs = matchMs;
+    }
+
+    const form = totalWeight > 0 ? weightedDominance / totalWeight : 0;
+    const recency = mostRecentMs != null
+      ? Math.pow(0.5, Math.max(0, nowMs - mostRecentMs) / HALF_LIFE_MS)
+      : 0;
+    const rating = member.rating ?? 0;
+
+    const score = rating * RATING_WEIGHT + form * 5 * FORM_WEIGHT + recency * RECENCY_WEIGHT;
     return { profile_id: member.profile_id, score };
   });
 
