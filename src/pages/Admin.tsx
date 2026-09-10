@@ -489,12 +489,13 @@ export default function Admin() {
   });
 
   const requestsQuery = useQuery({
-    queryKey: ["signup-requests"],
-    enabled: isAdmin && Boolean(supabase),
+    queryKey: ["signup-requests", clubId],
+    enabled: isAdmin && Boolean(supabase && clubId),
     queryFn: async (): Promise<SignupRequest[]> => {
       const { data, error } = await supabase!
         .from("signup_requests" as never)
         .select("id,email,full_name,requested_role,status,created_at")
+        .eq("club_id", clubId!)
         .eq("status", "pending")
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -523,12 +524,13 @@ export default function Admin() {
   });
 
   const invitesQuery = useQuery({
-    queryKey: ["club-invites"],
-    enabled: isAdmin && Boolean(supabase),
+    queryKey: ["club-invites", clubId],
+    enabled: isAdmin && Boolean(supabase && clubId),
     queryFn: async (): Promise<ClubInvite[]> => {
       const { data, error } = await supabase!
         .from("club_invites" as never)
         .select("id,email,role,status,expires_at,created_at")
+        .eq("club_id", clubId!)
         .order("created_at", { ascending: false })
         .limit(8);
       if (error) throw error;
