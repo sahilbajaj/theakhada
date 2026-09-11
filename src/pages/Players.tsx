@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AvatarUploadButton } from "@/components/AvatarUploadButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
@@ -19,7 +20,7 @@ import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
 
 export default function Players() {
-  const { role } = useAuth();
+  const { role, profile } = useAuth();
   const isAdmin = role === "owner" || role === "admin";
   const rosterQuery = useClubRoster();
   const matchesQuery = useRecentMatches(200);
@@ -91,6 +92,9 @@ export default function Players() {
                   className="pl-8"
                 />
               </div>
+             ) : null}
+            {!managing && profile?.id ? (
+              <AvatarUploadButton profileId={profile.id} label="My photo" />
             ) : null}
             {isAdmin ? (
               <Button
