@@ -92,6 +92,9 @@ export default function Players() {
                   className="pl-8"
                 />
               </div>
+             ) : null}
+            {!managing && profile?.id ? (
+              <AvatarUploadButton profileId={profile.id} label="My photo" />
             ) : null}
             {isAdmin ? (
               <Button
