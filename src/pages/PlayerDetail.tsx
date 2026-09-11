@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AvatarUploadButton } from "@/components/AvatarUploadButton";
+import { useAuth } from "@/contexts/AuthContext";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { useRecentMatches } from "@/features/matches/data/useMatches";
@@ -39,6 +41,8 @@ function FormPill({ r }: { r: Result }) {
 
 export default function PlayerDetail() {
   const { profileId } = useParams<{ profileId: string }>();
+  const { profile, role } = useAuth();
+  const canEditPhoto = Boolean(profileId) && (profile?.id === profileId || role === "owner" || role === "admin");
   const rosterQuery = useClubRoster();
   const matchesQuery = useRecentMatches(200);
   const { preferNicknames } = useClubSettings();
