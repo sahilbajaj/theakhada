@@ -20,7 +20,7 @@ import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
 
 export default function Players() {
-  const { role } = useAuth();
+  const { role, profile } = useAuth();
   const isAdmin = role === "owner" || role === "admin";
   const rosterQuery = useClubRoster();
   const matchesQuery = useRecentMatches(200);
