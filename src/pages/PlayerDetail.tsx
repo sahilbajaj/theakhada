@@ -117,6 +117,12 @@ export default function PlayerDetail() {
               ) : null}
             </div>
           </div>
+          {canEditPhoto && profileId ? (
+            <AvatarUploadButton
+              profileId={profileId}
+              label={member.avatar_url ? "Change photo" : "Add photo"}
+            />
+          ) : null}
         </div>
       </section>
 
