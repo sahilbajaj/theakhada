@@ -55,7 +55,7 @@ export default function Players() {
       })
       .map((member) => ({
         member,
-        stats: computeStats(matches, member.profile_id),
+        stats: computeStats(matches, member.profile_id, undefined, format === "combined" ? undefined : format),
       }))
       .sort((a, b) => {
         const sa = seedFor(a.member, format);

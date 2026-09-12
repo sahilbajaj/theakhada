@@ -1,4 +1,4 @@
-import type { MatchListItem, MatchSide } from "@/features/matches/types";
+import type { MatchFormat, MatchListItem, MatchSide } from "@/features/matches/types";
 
 export type Result = "W" | "L";
 
@@ -49,16 +49,23 @@ function inCurrentMonth(iso: string, now: Date): boolean {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
 
-export function matchesForProfile(matches: MatchListItem[], profileId: string): MatchListItem[] {
-  return matches.filter((m) => selfSideOf(m, profileId) !== null);
+export function matchesForProfile(
+  matches: MatchListItem[],
+  profileId: string,
+  format?: MatchFormat,
+): MatchListItem[] {
+  return matches.filter(
+    (m) => (format ? m.format === format : true) && selfSideOf(m, profileId) !== null,
+  );
 }
 
 export function computeStats(
   matches: MatchListItem[],
   profileId: string,
   now: Date = new Date(),
+  format?: MatchFormat,
 ): PlayerStats {
-  const mine = matchesForProfile(matches, profileId);
+  const mine = matchesForProfile(matches, profileId, format);
   if (!mine.length) return EMPTY;
 
   // matches sorted most recent first (as delivered by list_recent_matches).
