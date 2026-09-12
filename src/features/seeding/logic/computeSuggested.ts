@@ -3,6 +3,7 @@ import type { RosterMember } from "@/hooks/useClubRoster";
 import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 
 const HALF_LIFE_MS = 30 * 24 * 60 * 60 * 1000;
+const DECAY_GRACE_MS = 10 * 24 * 60 * 60 * 1000;
 const LENGTH_WEIGHTS: Record<number, number> = { 1: 0.67, 3: 1.0, 5: 1.33 };
 const RATING_ANCHOR = 3.0;
 const RATING_PRIOR_SCALE = 1.0;
@@ -89,7 +90,8 @@ export function computeScores(
       const lengthWeight = LENGTH_WEIGHTS[match.best_of] ?? 1;
 
       const ageMs = Math.max(0, nowMs - new Date(match.starts_at).getTime());
-      const decay = Math.pow(0.5, ageMs / HALF_LIFE_MS);
+      const decayAgeMs = Math.max(0, ageMs - DECAY_GRACE_MS);
+      const decay = Math.pow(0.5, decayAgeMs / HALF_LIFE_MS);
 
       totalPoints += (1 + margin) * oppStrength * lengthWeight * decay;
       winCount += 1;
