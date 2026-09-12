@@ -39,6 +39,36 @@ export function invalidSetReason(set: MatchSetRow): string | null {
   return `${a}–${b} isn't a completed set (need 6–0…6–4, 7–5 or 7–6)`;
 }
 
+/**
+ * A set with games entered but not a legal completion. Excludes 6–6 (waiting on
+ * tiebreak) and 7–6 with missing/tied tiebreak — those are ambiguous scorelines,
+ * not partial endings, and remain hard errors.
+ */
+export function isPartialSet(set: MatchSetRow): boolean {
+  if (isSetEmpty(set) || isSetComplete(set)) return false;
+  const { side_a_games: a, side_b_games: b } = set;
+  if (a === 6 && b === 6) return false;
+  if ((a === 7 && b === 6) || (b === 7 && a === 6)) return false;
+  return true;
+}
+
+/**
+ * Reason a played-set sequence can't be finalized, or null when it can.
+ * All sets before the last played set must be legally complete; the last
+ * played set may be complete OR a partial ending (e.g. retirement).
+ */
+export function invalidFinalizeReason(sets: MatchSetRow[]): string | null {
+  const played = sets.filter((s) => !isSetEmpty(s));
+  if (!played.length) return "Enter at least one set.";
+  for (let i = 0; i < played.length - 1; i += 1) {
+    const reason = invalidSetReason(played[i]);
+    if (reason) return `Set ${played[i].set_index}: ${reason}`;
+  }
+  const last = played[played.length - 1];
+  if (isSetComplete(last) || isPartialSet(last)) return null;
+  return `Set ${last.set_index}: ${invalidSetReason(last)}`;
+}
+
 export function tallySets(sets: MatchSetRow[]): { a: number; b: number } {
   return sets.reduce(
     (acc, set) => {

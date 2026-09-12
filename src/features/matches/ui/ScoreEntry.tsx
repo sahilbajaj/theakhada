@@ -34,7 +34,7 @@ import {
 import { useRecentOpponents } from "@/features/matches/data/useRecentOpponents";
 import { PickerSheet } from "@/features/matches/ui/PickerSheet";
 import { PlayerSlot } from "@/features/matches/ui/PlayerSlot";
-import { invalidSetReason, isSetComplete, isSetEmpty, matchWinner, setsToWin, tallySets } from "@/features/matches/logic/scoreRules";
+import { invalidFinalizeReason, invalidSetReason, isPartialSet, isSetComplete, isSetEmpty, matchWinner, setsToWin, tallySets } from "@/features/matches/logic/scoreRules";
 import type {
   BestOf,
   MatchFormat,
@@ -334,12 +334,10 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const currentComplete = currentSet ? isSetComplete(currentSet) : false;
   const currentSetIssue = currentSet && !isSetEmpty(currentSet) ? invalidSetReason(currentSet) : null;
   const playedDrafts = drafts.filter((s) => !isSetEmpty(s));
-  const firstBadSet = playedDrafts.find((s) => invalidSetReason(s) !== null);
-  const finalizeIssue = !playedDrafts.length
-    ? "Enter at least one completed set."
-    : firstBadSet
-    ? `Set ${firstBadSet.set_index}: ${invalidSetReason(firstBadSet)}`
-    : null;
+  const lastPlayed = playedDrafts[playedDrafts.length - 1];
+  const currentIsLastPlayed = Boolean(currentSet && lastPlayed && currentSet.set_index === lastPlayed.set_index);
+  const currentIsPartialEnding = Boolean(currentSet && currentIsLastPlayed && isPartialSet(currentSet));
+  const finalizeIssue = invalidFinalizeReason(playedDrafts);
   const currentAtDeuce = currentSet ? currentSet.side_a_games === 6 && currentSet.side_b_games === 6 : false;
   const showTiebreakUI = currentAtDeuce || (currentSet ? currentSet.tiebreak_a != null || currentSet.tiebreak_b != null : false);
   const targetSets = setsToWin(bestOf);
@@ -514,9 +512,15 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               </div>
 
               {currentSetIssue ? (
-                <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-                  {currentSetIssue}
-                </p>
+                currentIsPartialEnding ? (
+                  <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                    Set in progress — you can still end the match here (counts as a partial finish).
+                  </p>
+                ) : (
+                  <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                    {currentSetIssue}
+                  </p>
+                )
               ) : null}
             </>
           )}
@@ -686,7 +690,13 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
             <AlertDialogTitle>End this match?</AlertDialogTitle>
             <AlertDialogDescription>
               {projectedWinner
-                ? `Sets ${tally.a}–${tally.b}. Winner: Side ${projectedWinner}. You can reopen later to correct anything.`
+                ? `Sets ${tally.a}–${tally.b}. Winner: Side ${projectedWinner}.${
+                    currentIsPartialEnding && currentSet
+                      ? ` Last set ${currentSet.side_a_games}–${currentSet.side_b_games} counts toward Side ${
+                          currentSet.side_a_games > currentSet.side_b_games ? "A" : "B"
+                        }.`
+                      : ""
+                  } You can reopen later to correct anything.`
                 : `Sets ${tally.a}–${tally.b}. No clear winner yet — you can still finalize based on the current sets.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
