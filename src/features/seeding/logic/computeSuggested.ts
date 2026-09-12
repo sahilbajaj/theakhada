@@ -68,6 +68,7 @@ export function suggestedOrder(
       weightedDominance += dominance * weight;
       totalWeight += weight;
       played = true;
+      matchCount += 1;
 
       const matchMs = new Date(match.starts_at).getTime();
       if (mostRecentMs == null || matchMs > mostRecentMs) mostRecentMs = matchMs;
