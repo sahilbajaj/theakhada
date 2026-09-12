@@ -4,8 +4,10 @@ import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 
 const HALF_LIFE_MS = 30 * 24 * 60 * 60 * 1000;
 const LENGTH_WEIGHTS: Record<number, number> = { 1: 0.67, 3: 1.0, 5: 1.33 };
-const RATING_PRIOR_SCALE = 2;
+const RATING_ANCHOR = 3.0;
+const RATING_PRIOR_SCALE = 1.0;
 const RATING_PRIOR_FADE_AT = 8;
+const MATCH_SHRINK_K = 3;
 
 export interface ScoredMember {
   profile_id: string;
@@ -21,13 +23,17 @@ function seedForFormat(m: RosterMember, format: SeedFormat): number | null {
 }
 
 // computeScores returns the raw points-based score for each eligible
-// (non-guest) member. Formula: per-match points = (1 + margin) *
-// opp_strength * length_weight * decay, summed across finalized matches
-// in the requested format, plus a cold-start rating prior that fades to
-// zero by RATING_PRIOR_FADE_AT matches. Losses contribute 0 points but
-// still count toward matchCount (fading the prior). Opponent strength
-// uses each opponent's currently-stored seed for the format being
-// ranked. Mirrors public.recompute_seeds in the database.
+// (non-guest) member. Formula:
+//   score = totalPoints * matchCount / (matchCount + MATCH_SHRINK_K)
+//         + (rating - RATING_ANCHOR) * RATING_PRIOR_SCALE * priorScale
+// where totalPoints sums (1 + margin) * opp_strength * length_weight *
+// decay across won finalized matches in the requested format. The
+// shrink term dampens thin records; the rating prior nudges unplayed
+// members up or down relative to the default rating and fades to zero
+// by RATING_PRIOR_FADE_AT matches. Losses contribute 0 points but
+// still count toward matchCount. Opponent strength uses each
+// opponent's currently-stored seed for the format being ranked.
+// Mirrors public.recompute_seeds in the database.
 export function computeScores(
   members: RosterMember[],
   matches: MatchListItem[],
@@ -86,9 +92,10 @@ export function computeScores(
       totalPoints += (1 + margin) * oppStrength * lengthWeight * decay;
     }
 
-    const rating = member.rating ?? 0;
+    const rating = member.rating ?? RATING_ANCHOR;
+    const shrink = matchCount / (matchCount + MATCH_SHRINK_K);
     const priorScale = Math.max(0, 1 - matchCount / RATING_PRIOR_FADE_AT);
-    const score = totalPoints + rating * RATING_PRIOR_SCALE * priorScale;
+    const score = totalPoints * shrink + (rating - RATING_ANCHOR) * RATING_PRIOR_SCALE * priorScale;
 
     return { profile_id: member.profile_id, score, played: matchCount > 0, matchCount };
   });

@@ -177,7 +177,7 @@ export default function Players() {
                   <p className="truncate text-xs text-muted-foreground">
                     {stats.totalPlayed
                       ? `${stats.totalWins}-${stats.totalLosses} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"} · ${points.toFixed(1)} pts`
-                      : `No matches yet · ${points.toFixed(1)} pts`}
+                      : "No matches yet"}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
