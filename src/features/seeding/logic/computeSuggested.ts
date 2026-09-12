@@ -5,12 +5,21 @@ import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 const RATING_WEIGHT = 0.4;
 const FORM_WEIGHT = 0.45;
 const RECENCY_WEIGHT = 0.15;
+const EXPERIENCE_WEIGHT = 0.35;
 const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000; // two weeks
+// Number of matches at which form is trusted ~half way. With few matches the
+// form signal is shrunk towards the middle so a single lucky win can't top the
+// list.
+const FORM_CONFIDENCE_K = 4;
+// Matches needed before a member is considered fully "established". Below this
+// they get a proportionally smaller experience bonus.
+const EXPERIENCE_FULL_AT = 6;
 
 interface Scored {
   profile_id: string;
   score: number;
   played: boolean;
+  matchCount: number;
 }
 
 // suggestedOrder returns an ordered list of profile_ids (best first) based on
@@ -35,6 +44,7 @@ export function suggestedOrder(
     let totalWeight = 0;
     let mostRecentMs: number | null = null;
     let played = false;
+    let matchCount = 0;
 
     for (const match of matches) {
       if (match.status !== "final") continue;
@@ -58,22 +68,31 @@ export function suggestedOrder(
       weightedDominance += dominance * weight;
       totalWeight += weight;
       played = true;
+      matchCount += 1;
 
       const matchMs = new Date(match.starts_at).getTime();
       if (mostRecentMs == null || matchMs > mostRecentMs) mostRecentMs = matchMs;
     }
 
-    const form = totalWeight > 0 ? weightedDominance / totalWeight : 0;
+    const rawForm = totalWeight > 0 ? weightedDominance / totalWeight : 0;
+    // Shrink form towards neutral when the sample is small.
+    const confidence = matchCount / (matchCount + FORM_CONFIDENCE_K);
+    const form = rawForm * confidence;
     const recency = mostRecentMs != null
       ? Math.pow(0.5, Math.max(0, nowMs - mostRecentMs) / HALF_LIFE_MS)
       : 0;
+    const experience = Math.min(1, matchCount / EXPERIENCE_FULL_AT);
     const rating = member.rating ?? 0;
 
-    const score = rating * RATING_WEIGHT + form * 5 * FORM_WEIGHT + recency * RECENCY_WEIGHT;
-    return { profile_id: member.profile_id, score, played };
+    const score =
+      rating * RATING_WEIGHT +
+      form * 5 * FORM_WEIGHT +
+      recency * RECENCY_WEIGHT +
+      experience * EXPERIENCE_WEIGHT;
+    return { profile_id: member.profile_id, score, played, matchCount };
   });
 
   const filtered = format === "combined" ? scored : scored.filter((s) => s.played);
-  filtered.sort((a, b) => b.score - a.score);
+  filtered.sort((a, b) => b.score - a.score || b.matchCount - a.matchCount);
   return filtered.map((s) => s.profile_id);
 }
