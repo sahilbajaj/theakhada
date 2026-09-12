@@ -7,7 +7,7 @@ const LENGTH_WEIGHTS: Record<number, number> = { 1: 0.67, 3: 1.0, 5: 1.33 };
 const RATING_PRIOR_SCALE = 2;
 const RATING_PRIOR_FADE_AT = 8;
 
-interface Scored {
+export interface ScoredMember {
   profile_id: string;
   score: number;
   played: boolean;
@@ -20,20 +20,20 @@ function seedForFormat(m: RosterMember, format: SeedFormat): number | null {
   return m.seed;
 }
 
-// suggestedOrder returns an ordered list of profile_ids (best first) using
-// the points formula: per-match points = (1 + margin) * opp_strength *
-// length_weight * decay, summed across all finalized matches in the
-// requested format, plus a cold-start rating prior that fades to zero by
-// RATING_PRIOR_FADE_AT matches. Losses contribute 0 points but still count
-// toward matchCount (fading the prior). Opponent strength uses each
-// opponent's currently-stored seed for the format being ranked. Mirrors
-// public.recompute_seeds in the database.
-export function suggestedOrder(
+// computeScores returns the raw points-based score for each eligible
+// (non-guest) member. Formula: per-match points = (1 + margin) *
+// opp_strength * length_weight * decay, summed across finalized matches
+// in the requested format, plus a cold-start rating prior that fades to
+// zero by RATING_PRIOR_FADE_AT matches. Losses contribute 0 points but
+// still count toward matchCount (fading the prior). Opponent strength
+// uses each opponent's currently-stored seed for the format being
+// ranked. Mirrors public.recompute_seeds in the database.
+export function computeScores(
   members: RosterMember[],
   matches: MatchListItem[],
   format: SeedFormat = "combined",
   now: Date = new Date(),
-): string[] {
+): ScoredMember[] {
   if (!members.length) return [];
 
   const eligible = members.filter((m) => m.role !== "guest");
@@ -47,7 +47,7 @@ export function suggestedOrder(
   }
   const opponentRank = (profileId: string): number => rankByProfile.get(profileId) ?? N;
 
-  const scored: Scored[] = eligible.map((member) => {
+  const scored: ScoredMember[] = eligible.map((member) => {
     let totalPoints = 0;
     let matchCount = 0;
 
@@ -93,6 +93,16 @@ export function suggestedOrder(
     return { profile_id: member.profile_id, score, played: matchCount > 0, matchCount };
   });
 
+  return scored;
+}
+
+export function suggestedOrder(
+  members: RosterMember[],
+  matches: MatchListItem[],
+  format: SeedFormat = "combined",
+  now: Date = new Date(),
+): string[] {
+  const scored = computeScores(members, matches, format, now);
   const filtered = format === "combined" ? scored : scored.filter((s) => s.played);
   filtered.sort((a, b) => b.score - a.score || b.matchCount - a.matchCount);
   return filtered.map((s) => s.profile_id);

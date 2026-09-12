@@ -14,7 +14,7 @@ import { useClubSettings } from "@/hooks/useClubSettings";
 import { useRecentMatches } from "@/features/matches/data/useMatches";
 import { computeStats } from "@/features/stats/logic/computeStats";
 import type { SeedFormat } from "@/features/seeding/data/useSeeding";
-import { suggestedOrder } from "@/features/seeding/logic/computeSuggested";
+import { computeScores, suggestedOrder } from "@/features/seeding/logic/computeSuggested";
 import { SeedingPane, seedFor } from "@/features/seeding/ui/SeedingPane";
 import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
@@ -38,6 +38,12 @@ export default function Players() {
   const playedIdsForFormat = useMemo(() => {
     if (format === "combined") return null;
     return new Set(suggestedOrder(roster, matches, format));
+  }, [roster, matches, format]);
+
+  const pointsByProfile = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of computeScores(roster, matches, format)) map.set(s.profile_id, s.score);
+    return map;
   }, [roster, matches, format]);
 
   const rows = useMemo(() => {
@@ -152,6 +158,7 @@ export default function Players() {
           {rows.map(({ member, stats }) => {
             const name = displayName(member, { preferNicknames });
             const seed = seedFor(member, format);
+            const points = pointsByProfile.get(member.profile_id) ?? 0;
             return (
               <Link
                 key={member.profile_id}
@@ -169,8 +176,8 @@ export default function Players() {
                   <p className="truncate text-sm font-medium">{name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {stats.totalPlayed
-                      ? `${stats.totalWins}-${stats.totalLosses} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"}`
-                      : "No matches yet"}
+                      ? `${stats.totalWins}-${stats.totalLosses} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"} · ${points.toFixed(1)} pts`
+                      : `No matches yet · ${points.toFixed(1)} pts`}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
