@@ -2,18 +2,10 @@ import type { MatchListItem } from "@/features/matches/types";
 import type { RosterMember } from "@/hooks/useClubRoster";
 import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 
-const RATING_WEIGHT = 0.4;
-const FORM_WEIGHT = 0.45;
-const RECENCY_WEIGHT = 0.15;
-const EXPERIENCE_WEIGHT = 0.35;
-const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000; // two weeks
-// Number of matches at which form is trusted ~half way. With few matches the
-// form signal is shrunk towards the middle so a single lucky win can't top the
-// list.
-const FORM_CONFIDENCE_K = 4;
-// Matches needed before a member is considered fully "established". Below this
-// they get a proportionally smaller experience bonus.
-const EXPERIENCE_FULL_AT = 6;
+const HALF_LIFE_MS = 30 * 24 * 60 * 60 * 1000;
+const LENGTH_WEIGHTS: Record<number, number> = { 1: 0.67, 3: 1.0, 5: 1.33 };
+const RATING_PRIOR_SCALE = 2;
+const RATING_PRIOR_FADE_AT = 8;
 
 interface Scored {
   profile_id: string;
@@ -22,12 +14,20 @@ interface Scored {
   matchCount: number;
 }
 
-// suggestedOrder returns an ordered list of profile_ids (best first) based on
-// rating, dominance-weighted form across finalized matches in the requested
-// format (14-day per-match half-life), and how recently the member played.
-// For "singles"/"doubles" formats, members who haven't played that format are
-// excluded from the result. Pure — feed it the same inputs and get the same
-// output.
+function seedForFormat(m: RosterMember, format: SeedFormat): number | null {
+  if (format === "singles") return m.singles_seed;
+  if (format === "doubles") return m.doubles_seed;
+  return m.seed;
+}
+
+// suggestedOrder returns an ordered list of profile_ids (best first) using
+// the points formula: per-match points = (1 + margin) * opp_strength *
+// length_weight * decay, summed across all finalized matches in the
+// requested format, plus a cold-start rating prior that fades to zero by
+// RATING_PRIOR_FADE_AT matches. Losses contribute 0 points but still count
+// toward matchCount (fading the prior). Opponent strength uses each
+// opponent's currently-stored seed for the format being ranked. Mirrors
+// public.recompute_seeds in the database.
 export function suggestedOrder(
   members: RosterMember[],
   matches: MatchListItem[],
@@ -37,13 +37,18 @@ export function suggestedOrder(
   if (!members.length) return [];
 
   const eligible = members.filter((m) => m.role !== "guest");
+  const N = Math.max(eligible.length, 1);
   const nowMs = now.getTime();
 
+  const rankByProfile = new Map<string, number>();
+  for (const m of members) {
+    const rank = seedForFormat(m, format);
+    if (rank != null) rankByProfile.set(m.profile_id, rank);
+  }
+  const opponentRank = (profileId: string): number => rankByProfile.get(profileId) ?? N;
+
   const scored: Scored[] = eligible.map((member) => {
-    let weightedDominance = 0;
-    let totalWeight = 0;
-    let mostRecentMs: number | null = null;
-    let played = false;
+    let totalPoints = 0;
     let matchCount = 0;
 
     for (const match of matches) {
@@ -52,6 +57,8 @@ export function suggestedOrder(
       const onA = match.side_a.some((p) => p.profile_id === member.profile_id);
       const onB = !onA && match.side_b.some((p) => p.profile_id === member.profile_id);
       if (!onA && !onB) continue;
+
+      matchCount += 1;
 
       let gamesA = 0;
       let gamesB = 0;
@@ -62,34 +69,28 @@ export function suggestedOrder(
       const total = gamesA + gamesB;
       if (total <= 0) continue;
 
-      const dominance = onA ? (gamesA - gamesB) / total : (gamesB - gamesA) / total;
-      const ageMs = Math.max(0, nowMs - new Date(match.starts_at).getTime());
-      const weight = Math.pow(0.5, ageMs / HALF_LIFE_MS);
-      weightedDominance += dominance * weight;
-      totalWeight += weight;
-      played = true;
-      matchCount += 1;
+      const margin = onA ? (gamesA - gamesB) / total : (gamesB - gamesA) / total;
+      if (margin <= 0) continue;
 
-      const matchMs = new Date(match.starts_at).getTime();
-      if (mostRecentMs == null || matchMs > mostRecentMs) mostRecentMs = matchMs;
+      const opponents = onA ? match.side_b : match.side_a;
+      const avgOppRank = opponents.length
+        ? opponents.reduce((s, p) => s + opponentRank(p.profile_id), 0) / opponents.length
+        : N;
+      const oppStrength = 1 + (N - avgOppRank) / N;
+
+      const lengthWeight = LENGTH_WEIGHTS[match.best_of] ?? 1;
+
+      const ageMs = Math.max(0, nowMs - new Date(match.starts_at).getTime());
+      const decay = Math.pow(0.5, ageMs / HALF_LIFE_MS);
+
+      totalPoints += (1 + margin) * oppStrength * lengthWeight * decay;
     }
 
-    const rawForm = totalWeight > 0 ? weightedDominance / totalWeight : 0;
-    // Shrink form towards neutral when the sample is small.
-    const confidence = matchCount / (matchCount + FORM_CONFIDENCE_K);
-    const form = rawForm * confidence;
-    const recency = mostRecentMs != null
-      ? Math.pow(0.5, Math.max(0, nowMs - mostRecentMs) / HALF_LIFE_MS)
-      : 0;
-    const experience = Math.min(1, matchCount / EXPERIENCE_FULL_AT);
     const rating = member.rating ?? 0;
+    const priorScale = Math.max(0, 1 - matchCount / RATING_PRIOR_FADE_AT);
+    const score = totalPoints + rating * RATING_PRIOR_SCALE * priorScale;
 
-    const score =
-      rating * RATING_WEIGHT +
-      form * 5 * FORM_WEIGHT +
-      recency * RECENCY_WEIGHT +
-      experience * EXPERIENCE_WEIGHT;
-    return { profile_id: member.profile_id, score, played, matchCount };
+    return { profile_id: member.profile_id, score, played: matchCount > 0, matchCount };
   });
 
   const filtered = format === "combined" ? scored : scored.filter((s) => s.played);
