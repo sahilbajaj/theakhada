@@ -5,12 +5,21 @@ import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 const RATING_WEIGHT = 0.4;
 const FORM_WEIGHT = 0.45;
 const RECENCY_WEIGHT = 0.15;
+const EXPERIENCE_WEIGHT = 0.35;
 const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000; // two weeks
+// Number of matches at which form is trusted ~half way. With few matches the
+// form signal is shrunk towards the middle so a single lucky win can't top the
+// list.
+const FORM_CONFIDENCE_K = 4;
+// Matches needed before a member is considered fully "established". Below this
+// they get a proportionally smaller experience bonus.
+const EXPERIENCE_FULL_AT = 6;
 
 interface Scored {
   profile_id: string;
   score: number;
   played: boolean;
+  matchCount: number;
 }
 
 // suggestedOrder returns an ordered list of profile_ids (best first) based on
