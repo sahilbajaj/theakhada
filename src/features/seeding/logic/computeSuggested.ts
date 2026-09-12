@@ -24,14 +24,15 @@ function seedForFormat(m: RosterMember, format: SeedFormat): number | null {
 
 // computeScores returns the raw points-based score for each eligible
 // (non-guest) member. Formula:
-//   score = totalPoints * matchCount / (matchCount + MATCH_SHRINK_K)
+//   score = totalPoints * winCount / (matchCount + MATCH_SHRINK_K)
 //         + (rating - RATING_ANCHOR) * RATING_PRIOR_SCALE * priorScale
 // where totalPoints sums (1 + margin) * opp_strength * length_weight *
 // decay across won finalized matches in the requested format. The
-// shrink term dampens thin records; the rating prior nudges unplayed
-// members up or down relative to the default rating and fades to zero
-// by RATING_PRIOR_FADE_AT matches. Losses contribute 0 points but
-// still count toward matchCount. Opponent strength uses each
+// winCount / (matchCount + K) factor rewards wins in the numerator
+// and dilutes with losses in the denominator, while also shrinking
+// thin records. The rating prior nudges unplayed members up or down
+// relative to the default rating and fades to zero by
+// RATING_PRIOR_FADE_AT matches. Opponent strength uses each
 // opponent's currently-stored seed for the format being ranked.
 // Mirrors public.recompute_seeds in the database.
 export function computeScores(
@@ -56,6 +57,7 @@ export function computeScores(
   const scored: ScoredMember[] = eligible.map((member) => {
     let totalPoints = 0;
     let matchCount = 0;
+    let winCount = 0;
 
     for (const match of matches) {
       if (match.status !== "final") continue;
@@ -90,10 +92,11 @@ export function computeScores(
       const decay = Math.pow(0.5, ageMs / HALF_LIFE_MS);
 
       totalPoints += (1 + margin) * oppStrength * lengthWeight * decay;
+      winCount += 1;
     }
 
     const rating = member.rating ?? RATING_ANCHOR;
-    const shrink = matchCount / (matchCount + MATCH_SHRINK_K);
+    const shrink = winCount / (matchCount + MATCH_SHRINK_K);
     const priorScale = Math.max(0, 1 - matchCount / RATING_PRIOR_FADE_AT);
     const score = totalPoints * shrink + (rating - RATING_ANCHOR) * RATING_PRIOR_SCALE * priorScale;
 
