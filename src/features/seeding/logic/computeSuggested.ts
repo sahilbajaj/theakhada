@@ -44,6 +44,7 @@ export function suggestedOrder(
     let totalWeight = 0;
     let mostRecentMs: number | null = null;
     let played = false;
+    let matchCount = 0;
 
     for (const match of matches) {
       if (match.status !== "final") continue;
