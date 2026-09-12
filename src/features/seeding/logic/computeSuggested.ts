@@ -74,17 +74,25 @@ export function suggestedOrder(
       if (mostRecentMs == null || matchMs > mostRecentMs) mostRecentMs = matchMs;
     }
 
-    const form = totalWeight > 0 ? weightedDominance / totalWeight : 0;
+    const rawForm = totalWeight > 0 ? weightedDominance / totalWeight : 0;
+    // Shrink form towards neutral when the sample is small.
+    const confidence = matchCount / (matchCount + FORM_CONFIDENCE_K);
+    const form = rawForm * confidence;
     const recency = mostRecentMs != null
       ? Math.pow(0.5, Math.max(0, nowMs - mostRecentMs) / HALF_LIFE_MS)
       : 0;
+    const experience = Math.min(1, matchCount / EXPERIENCE_FULL_AT);
     const rating = member.rating ?? 0;
 
-    const score = rating * RATING_WEIGHT + form * 5 * FORM_WEIGHT + recency * RECENCY_WEIGHT;
-    return { profile_id: member.profile_id, score, played };
+    const score =
+      rating * RATING_WEIGHT +
+      form * 5 * FORM_WEIGHT +
+      recency * RECENCY_WEIGHT +
+      experience * EXPERIENCE_WEIGHT;
+    return { profile_id: member.profile_id, score, played, matchCount };
   });
 
   const filtered = format === "combined" ? scored : scored.filter((s) => s.played);
-  filtered.sort((a, b) => b.score - a.score);
+  filtered.sort((a, b) => b.score - a.score || b.matchCount - a.matchCount);
   return filtered.map((s) => s.profile_id);
 }
