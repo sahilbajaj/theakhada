@@ -50,8 +50,6 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
         navigateFallbackDenylist: [/^\/api/, /^\/auth/],
         runtimeCaching: [
           {
