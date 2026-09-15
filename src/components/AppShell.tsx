@@ -32,7 +32,7 @@ const primaryNav = [
   { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/explore", label: "Explore", icon: Compass, hideOnBottom: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
-  { to: "/superadmin", label: "Superadmin", icon: Shield, superadminOnly: true },
+  { to: "/superadmin", label: "Superadmin", icon: Shield, superadminOnly: true, hideOnBottom: true },
 ];
 
 const comingSoonNav = [
