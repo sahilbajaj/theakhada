@@ -17,15 +17,15 @@ export interface RosterMember {
 interface MembershipRow {
   profile_id: string;
   role: string;
+  seed: number | null;
+  singles_seed: number | null;
+  doubles_seed: number | null;
   profiles: {
     id: string;
     full_name: string | null;
     nickname: string | null;
     avatar_url: string | null;
     rating: number | null;
-    seed: number | null;
-    singles_seed: number | null;
-    doubles_seed: number | null;
     email: string | null;
     role: string | null;
   } | null;
@@ -39,7 +39,7 @@ export function useClubRoster() {
     queryFn: async (): Promise<RosterMember[]> => {
       const { data, error } = await supabase!
         .from("club_memberships" as never)
-        .select("profile_id, role, profiles:profile_id(id, full_name, nickname, avatar_url, rating, seed, singles_seed, doubles_seed, email, role)")
+        .select("profile_id, role, seed, singles_seed, doubles_seed, profiles:profile_id(id, full_name, nickname, avatar_url, rating, email, role)")
         .eq("club_id", clubId!);
       if (error) throw error;
       const rows = (data as MembershipRow[] | null) ?? [];
@@ -51,9 +51,9 @@ export function useClubRoster() {
           nickname: row.profiles!.nickname,
           avatar_url: row.profiles!.avatar_url,
           rating: row.profiles!.rating,
-          seed: row.profiles!.seed,
-          singles_seed: row.profiles!.singles_seed,
-          doubles_seed: row.profiles!.doubles_seed,
+          seed: row.seed,
+          singles_seed: row.singles_seed,
+          doubles_seed: row.doubles_seed,
           role: row.role ?? row.profiles!.role ?? "player",
         }))
         .sort((a, b) => a.full_name.localeCompare(b.full_name));
