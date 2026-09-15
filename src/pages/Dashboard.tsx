@@ -102,13 +102,13 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button size="lg" variant="outline" onClick={() => setChallengeOpen(true)} className="w-full sm:w-auto">
-              <Swords className="h-4 w-4" />
-              Schedule
-            </Button>
             <Button size="lg" onClick={openNewMatch} className="w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Start a match
+            </Button>
+            <Button size="lg" variant="ghost" onClick={() => setChallengeOpen(true)} className="w-full sm:w-auto">
+              <Swords className="h-4 w-4" />
+              Schedule
             </Button>
           </div>
         </div>

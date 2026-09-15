@@ -122,7 +122,7 @@ export default function PlayerDetail() {
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
             {!isSelf && profileId ? (
-              <Button size="sm" onClick={() => setChallengeOpen(true)}>
+              <Button size="sm" variant="outline" onClick={() => setChallengeOpen(true)}>
                 <Swords className="mr-2 h-4 w-4" />
                 Challenge
               </Button>
