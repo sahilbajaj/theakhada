@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Swords } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { useClubSettings } from "@/hooks/useClubSettings";
 import { useRecentMatches } from "@/features/matches/data/useMatches";
 import { MatchCard } from "@/features/matches/ui/MatchCard";
 import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
+import { ChallengeSheet } from "@/features/challenges/ui/ChallengeSheet";
 import { computeStats, matchesForProfile, type Result } from "@/features/stats/logic/computeStats";
 import { displayName, formalName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
@@ -48,6 +49,8 @@ export default function PlayerDetail() {
   const { preferNicknames } = useClubSettings();
   const [entryOpen, setEntryOpen] = useState(false);
   const [entryMatchId, setEntryMatchId] = useState<string | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const isSelf = profile?.id === profileId;
 
   const member = useMemo(
     () => rosterQuery.data?.find((m) => m.profile_id === profileId),
@@ -117,14 +120,30 @@ export default function PlayerDetail() {
               ) : null}
             </div>
           </div>
-          {canEditPhoto && profileId ? (
-            <AvatarUploadButton
-              profileId={profileId}
-              label={member.avatar_url ? "Change photo" : "Add photo"}
-            />
-          ) : null}
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            {!isSelf && profileId ? (
+              <Button size="sm" onClick={() => setChallengeOpen(true)}>
+                <Swords className="mr-2 h-4 w-4" />
+                Challenge
+              </Button>
+            ) : null}
+            {canEditPhoto && profileId ? (
+              <AvatarUploadButton
+                profileId={profileId}
+                label={member.avatar_url ? "Change photo" : "Add photo"}
+              />
+            ) : null}
+          </div>
         </div>
       </section>
+
+      {profileId && !isSelf ? (
+        <ChallengeSheet
+          open={challengeOpen}
+          onOpenChange={setChallengeOpen}
+          opponentId={profileId}
+        />
+      ) : null}
 
       <section className="grid gap-2">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">This month</h3>

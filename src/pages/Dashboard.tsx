@@ -11,6 +11,7 @@ import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
 import type { MatchListItem, MatchSide } from "@/features/matches/types";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
+import { ChallengesSection } from "@/features/challenges/ui/ChallengesSection";
 import { cn } from "@/lib/utils";
 
 function isSameDay(a: Date, b: Date) {
@@ -104,6 +105,8 @@ export default function Dashboard() {
           </Button>
         </div>
       </section>
+
+      <ChallengesSection />
 
       {liveMatch ? (
         <section className="grid gap-2">
