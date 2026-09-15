@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Activity, CalendarClock, Plus, Trophy, UsersRound } from "lucide-react";
+import { Activity, CalendarClock, Plus, Swords, Trophy, UsersRound } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import type { MatchListItem, MatchSide } from "@/features/matches/types";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { ChallengesSection } from "@/features/challenges/ui/ChallengesSection";
+import { ChallengeSheet } from "@/features/challenges/ui/ChallengeSheet";
 import { cn } from "@/lib/utils";
 
 function isSameDay(a: Date, b: Date) {
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const { preferNicknames } = useClubSettings();
   const [entryOpen, setEntryOpen] = useState(false);
   const [entryMatchId, setEntryMatchId] = useState<string | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
 
   const selfId = profile?.id ?? null;
   const matches = matchesQuery.data ?? [];
@@ -99,10 +101,16 @@ export default function Dashboard() {
               {liveCount > 0 ? `${liveCount} live · ${todayCount} today` : todayCount > 0 ? `${todayCount} match${todayCount === 1 ? "" : "es"} today` : "No matches yet today."}
             </p>
           </div>
-          <Button size="lg" onClick={openNewMatch} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Start a match
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button size="lg" variant="outline" onClick={() => setChallengeOpen(true)} className="w-full sm:w-auto">
+              <Swords className="h-4 w-4" />
+              Schedule
+            </Button>
+            <Button size="lg" onClick={openNewMatch} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              Start a match
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -154,6 +162,7 @@ export default function Dashboard() {
       </section>
 
       <ScoreEntry open={entryOpen} onOpenChange={setEntryOpen} matchId={entryMatchId} />
+      <ChallengeSheet open={challengeOpen} onOpenChange={setChallengeOpen} />
     </div>
   );
 }
