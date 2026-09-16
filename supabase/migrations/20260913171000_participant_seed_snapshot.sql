@@ -18,10 +18,11 @@ update public.match_participants mp
    set seed_at_match         = cm.seed,
        singles_seed_at_match = cm.singles_seed,
        doubles_seed_at_match = cm.doubles_seed
-  from public.matches m
-  join public.club_memberships cm
-    on cm.profile_id = mp.profile_id and cm.club_id = m.club_id
+  from public.matches m,
+       public.club_memberships cm
  where m.id = mp.match_id
+   and cm.profile_id = mp.profile_id
+   and cm.club_id = m.club_id
    and m.status = 'final'
    and mp.seed_at_match is null
    and mp.singles_seed_at_match is null
