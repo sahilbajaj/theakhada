@@ -17,10 +17,13 @@ export interface ScoredMember {
   matchCount: number;
 }
 
-function seedForFormat(m: RosterMember, format: SeedFormat): number | null {
-  if (format === "singles") return m.singles_seed;
-  if (format === "doubles") return m.doubles_seed;
-  return m.seed;
+function participantSnapshotSeed(
+  p: { seed_at_match?: number | null; singles_seed_at_match?: number | null; doubles_seed_at_match?: number | null },
+  format: SeedFormat,
+): number | null | undefined {
+  if (format === "singles") return p.singles_seed_at_match;
+  if (format === "doubles") return p.doubles_seed_at_match;
+  return p.seed_at_match;
 }
 
 // computeScores returns the raw points-based score for each eligible
@@ -33,8 +36,9 @@ function seedForFormat(m: RosterMember, format: SeedFormat): number | null {
 // and dilutes with losses in the denominator, while also shrinking
 // thin records. The rating prior nudges unplayed members up or down
 // relative to the default rating and fades to zero by
-// RATING_PRIOR_FADE_AT matches. Opponent strength uses each
-// opponent's currently-stored seed for the format being ranked.
+// RATING_PRIOR_FADE_AT matches. Opponent strength reads the opponent's
+// seed as-of match completion (from *_at_match on the participant), so
+// historical points don't churn when the club's seeds shuffle.
 // Mirrors public.recompute_seeds in the database.
 export function computeScores(
   members: RosterMember[],
@@ -47,13 +51,6 @@ export function computeScores(
   const eligible = members.filter((m) => m.role !== "guest");
   const N = Math.max(eligible.length, 1);
   const nowMs = now.getTime();
-
-  const rankByProfile = new Map<string, number>();
-  for (const m of members) {
-    const rank = seedForFormat(m, format);
-    if (rank != null) rankByProfile.set(m.profile_id, rank);
-  }
-  const opponentRank = (profileId: string): number => rankByProfile.get(profileId) ?? N;
 
   const scored: ScoredMember[] = eligible.map((member) => {
     let totalPoints = 0;
@@ -83,7 +80,7 @@ export function computeScores(
 
       const opponents = onA ? match.side_b : match.side_a;
       const avgOppRank = opponents.length
-        ? opponents.reduce((s, p) => s + opponentRank(p.profile_id), 0) / opponents.length
+        ? opponents.reduce((s, p) => s + (participantSnapshotSeed(p, format) ?? N), 0) / opponents.length
         : N;
       const oppStrength = 1 + (N - avgOppRank) / N;
 

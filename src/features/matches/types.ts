@@ -10,6 +10,9 @@ export interface MatchParticipant {
   nickname: string | null;
   avatar_url: string | null;
   position: number;
+  seed_at_match?: number | null;
+  singles_seed_at_match?: number | null;
+  doubles_seed_at_match?: number | null;
 }
 
 export interface MatchSetRow {
