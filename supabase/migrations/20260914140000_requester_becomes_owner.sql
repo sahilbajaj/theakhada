@@ -1,0 +1,57 @@
+-- On approving a club creation request, also make the requester the
+-- club's owner. Without this, an approved requester is left with a club
+-- they can't manage until a superadmin invites them separately.
+
+create or replace function public.review_club_creation_request(
+  p_id uuid,
+  p_approve boolean
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_reviewer uuid := public.current_profile_id();
+  v_req record;
+  v_club_id uuid;
+begin
+  if not public.is_superadmin() then
+    raise exception 'Superadmin only';
+  end if;
+
+  select id, requester_profile_id, proposed_name, city, status
+    into v_req
+    from public.club_creation_requests
+   where id = p_id
+   for update;
+
+  if not found then
+    raise exception 'Request not found';
+  end if;
+  if v_req.status <> 'pending' then
+    raise exception 'Request already reviewed';
+  end if;
+
+  if p_approve then
+    v_club_id := public.create_club(v_req.proposed_name, v_req.city, 'UTC');
+
+    insert into public.club_memberships (club_id, profile_id, role)
+    values (v_club_id, v_req.requester_profile_id, 'owner')
+    on conflict (club_id, profile_id) do nothing;
+  end if;
+
+  update public.club_creation_requests
+     set status = case when p_approve then 'approved' else 'rejected' end,
+         reviewed_by = v_reviewer,
+         reviewed_at = now()
+   where id = p_id;
+
+  return v_club_id;
+end;
+$$;
+
+revoke all on function public.review_club_creation_request(uuid, boolean) from public;
+grant execute on function public.review_club_creation_request(uuid, boolean) to authenticated;
+
+notify pgrst, 'reload schema';
