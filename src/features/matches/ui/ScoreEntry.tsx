@@ -216,7 +216,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setPhase("scoring");
       if (result.merged) {
         toast.success("Continuing your earlier match", {
-          description: "Same players and setter within 3 hours — new sets will be appended.",
+          description: "Same players, another 1-set match within 3 hours — the new set will be appended.",
         });
       } else {
         toast.success("Match started");

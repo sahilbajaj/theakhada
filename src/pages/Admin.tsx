@@ -613,7 +613,7 @@ export default function Admin() {
           <div>
             <h3 className="font-semibold">Merge routine matches</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              When on, starting a new match with the same players (and single setter) as a match finalized in the last 3 hours will append new sets to that match instead of creating a new one.
+              When on, starting a new 1-set match with the same players as a 1-set match finalized in the last 3 hours appends the new set to that match instead of creating a new one.
             </p>
           </div>
           <Switch
