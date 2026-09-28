@@ -128,7 +128,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       const hydrated = toDraftSets(existingMatch.sets);
       setDrafts(hydrated);
       setCurrentSetIdx(hydrated.length - 1);
-    } else if (!matchId) {
+    } else if (!matchId && !activeMatchId) {
       setPhase("setup");
       setFormat("singles");
       setBestOf(3);
@@ -141,7 +141,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setDrafts([{ set_index: 1, side_a_games: 0, side_b_games: 0, tiebreak_a: null, tiebreak_b: null }]);
       setCurrentSetIdx(0);
     }
-  }, [open, matchId, existingMatch, profile?.id, isAdmin]);
+  }, [open, matchId, existingMatch, profile?.id, isAdmin, activeMatchId]);
 
   // After a merge-append, the drawer was opened without a matchId but
   // handleStart set activeMatchId to a merged match. Hydrate its sets +
