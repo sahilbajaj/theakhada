@@ -171,15 +171,23 @@ function PendingClubRequestsCard() {
 
   const review = useMutation({
     mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
-      const { error } = await supabase!.rpc("review_club_creation_request" as never, {
+      const { data, error } = await supabase!.rpc("review_club_creation_request" as never, {
         p_id: id,
         p_approve: approve,
       } as never);
       if (error) throw error;
+      return data as unknown as string | null;
     },
-    onSuccess: async (_data, vars) => {
-      toast.success(vars.approve ? "Request approved" : "Request rejected");
+    onSuccess: async (newClubId, vars) => {
+      if (vars.approve) {
+        toast.success("Club created", {
+          description: newClubId ? `New club id: ${String(newClubId).slice(0, 8)}…` : undefined,
+        });
+      } else {
+        toast.success("Request rejected");
+      }
       await queryClient.invalidateQueries({ queryKey: CLUB_REQUESTS_KEY });
+      await queryClient.invalidateQueries({ queryKey: CLUBS_KEY });
     },
     onError: (error) =>
       toast.error("Could not update request", {
@@ -188,7 +196,6 @@ function PendingClubRequestsCard() {
   });
 
   const requests = query.data ?? [];
-  if (!query.isLoading && !requests.length) return null;
 
   return (
     <div className="rounded-xl border border-border/60 bg-card p-5 shadow-card">
@@ -198,6 +205,12 @@ function PendingClubRequestsCard() {
       </div>
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : query.isError ? (
+        <p className="text-sm text-destructive">
+          Could not load requests: {query.error instanceof Error ? query.error.message : "unknown error"}
+        </p>
+      ) : !requests.length ? (
+        <p className="text-sm text-muted-foreground">No pending requests.</p>
       ) : (
         <ul className="grid gap-3">
           {requests.map((r) => (
