@@ -92,9 +92,11 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const suspendMatch = useSuspendMatch();
   const resumeMatch = useResumeMatch();
 
+  const [activeMatchId, setActiveMatchId] = useState<string | null>(matchId ?? null);
+
   const existingMatch: MatchListItem | undefined = useMemo(
-    () => matchesQuery.data?.find((m) => m.match_id === matchId) ?? undefined,
-    [matchesQuery.data, matchId],
+    () => matchesQuery.data?.find((m) => m.match_id === (matchId ?? activeMatchId)) ?? undefined,
+    [matchesQuery.data, matchId, activeMatchId],
   );
 
   const [phase, setPhase] = useState<Phase>(matchId ? "scoring" : "setup");
@@ -102,7 +104,6 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   const [bestOf, setBestOf] = useState<BestOf>(3);
   const [sideA, setSideA] = useState<(string | null)[]>([]);
   const [sideB, setSideB] = useState<(string | null)[]>([]);
-  const [activeMatchId, setActiveMatchId] = useState<string | null>(matchId ?? null);
   const [drafts, setDrafts] = useState<DraftSet[]>([]);
   const [currentSetIdx, setCurrentSetIdx] = useState(0);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
@@ -141,6 +142,24 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       setCurrentSetIdx(0);
     }
   }, [open, matchId, existingMatch, profile?.id, isAdmin]);
+
+  // After a merge-append, the drawer was opened without a matchId but
+  // handleStart set activeMatchId to a merged match. Hydrate its sets +
+  // best_of the first time existingMatch resolves.
+  const [hydratedMergedId, setHydratedMergedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (matchId) return;
+    if (phase !== "scoring") return;
+    if (!activeMatchId || !existingMatch) return;
+    if (hydratedMergedId === activeMatchId) return;
+    setBestOf(existingMatch.best_of);
+    setSideA(existingMatch.side_a.map((p: MatchParticipant) => p.profile_id));
+    setSideB(existingMatch.side_b.map((p: MatchParticipant) => p.profile_id));
+    const hydrated = toDraftSets(existingMatch.sets);
+    setDrafts(hydrated);
+    setCurrentSetIdx(hydrated.length - 1);
+    setHydratedMergedId(activeMatchId);
+  }, [matchId, phase, activeMatchId, existingMatch, hydratedMergedId]);
 
   // Resize slot arrays when format changes (setup phase only).
   useEffect(() => {
@@ -192,10 +211,16 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
   async function handleStart() {
     if (!setupValid) return;
     try {
-      const id = await createMatch.mutateAsync({ format, sideA: filledA, sideB: filledB, bestOf });
-      setActiveMatchId(id);
+      const result = await createMatch.mutateAsync({ format, sideA: filledA, sideB: filledB, bestOf });
+      setActiveMatchId(result.matchId);
       setPhase("scoring");
-      toast.success("Match started");
+      if (result.merged) {
+        toast.success("Continuing your earlier match", {
+          description: "Same players and setter within 3 hours — new sets will be appended.",
+        });
+      } else {
+        toast.success("Match started");
+      }
     } catch (err) {
       toast.error("Could not start match", { description: err instanceof Error ? err.message : "Try again." });
     }

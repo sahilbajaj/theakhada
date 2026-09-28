@@ -71,6 +71,7 @@ interface ClubMember {
 
 interface ClubSettings {
   prefer_nicknames: boolean;
+  merge_routine_matches: boolean;
 }
 
 const assignableRoles: Exclude<MemberRole, "owner">[] = ["admin", "coach", "player", "guest"];
@@ -464,18 +465,34 @@ export default function Admin() {
     queryFn: async (): Promise<ClubSettings> => {
       const { data, error } = await supabase!
         .from("clubs" as never)
-        .select("prefer_nicknames")
+        .select("prefer_nicknames,merge_routine_matches")
         .eq("id", clubId!)
         .single();
       if (error) throw error;
-      return (data as ClubSettings) ?? { prefer_nicknames: true };
+      return (data as ClubSettings) ?? { prefer_nicknames: true, merge_routine_matches: false };
     },
   });
   const preferNicknames = settingsQuery.data?.prefer_nicknames ?? true;
+  const mergeRoutineMatches = settingsQuery.data?.merge_routine_matches ?? false;
 
   const preferNicknamesMutation = useMutation({
     mutationFn: async (nextValue: boolean) => {
       const { error } = await supabase!.rpc("set_club_prefer_nicknames" as never, {
+        p_club_id: clubId,
+        p_value: nextValue,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["club-settings"] });
+      toast.success("Preference saved");
+    },
+    onError: (error) => toast.error("Could not save preference", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
+  const mergeRoutineMatchesMutation = useMutation({
+    mutationFn: async (nextValue: boolean) => {
+      const { error } = await supabase!.rpc("set_club_merge_routine_matches" as never, {
         p_club_id: clubId,
         p_value: nextValue,
       } as never);
@@ -587,6 +604,22 @@ export default function Admin() {
             checked={preferNicknames}
             disabled={settingsQuery.isLoading || preferNicknamesMutation.isPending}
             onCheckedChange={(next) => preferNicknamesMutation.mutate(next)}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="font-semibold">Merge routine matches</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              When on, starting a new match with the same players (and single setter) as a match finalized in the last 3 hours will append new sets to that match instead of creating a new one.
+            </p>
+          </div>
+          <Switch
+            checked={mergeRoutineMatches}
+            disabled={settingsQuery.isLoading || mergeRoutineMatchesMutation.isPending}
+            onCheckedChange={(next) => mergeRoutineMatchesMutation.mutate(next)}
           />
         </div>
       </section>

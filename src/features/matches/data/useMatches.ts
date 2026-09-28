@@ -70,11 +70,16 @@ interface CreateMatchInput {
   courtId?: string | null;
 }
 
+export interface CreateMatchResult {
+  matchId: string;
+  merged: boolean;
+}
+
 export function useCreateMatch() {
   const { clubId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreateMatchInput): Promise<string> => {
+    mutationFn: async (input: CreateMatchInput): Promise<CreateMatchResult> => {
       const { data, error } = await supabase!.rpc("create_match" as never, {
         p_club_id: clubId,
         p_format: input.format,
@@ -84,7 +89,10 @@ export function useCreateMatch() {
         p_court_id: input.courtId ?? null,
       } as never);
       if (error) throw error;
-      return data as unknown as string;
+      const payload = data as { match_id: string; merged: boolean } | string | null;
+      if (typeof payload === "string") return { matchId: payload, merged: false };
+      if (payload && "match_id" in payload) return { matchId: payload.match_id, merged: Boolean(payload.merged) };
+      throw new Error("create_match returned no match id");
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: MATCHES_KEY });
