@@ -1,6 +1,8 @@
 -- Approving a club creation request now creates the club (name + city
 -- from the request, timezone defaults to 'UTC'). Rejection is unchanged.
 
+drop function if exists public.review_club_creation_request(uuid, boolean);
+
 create or replace function public.review_club_creation_request(
   p_id uuid,
   p_approve boolean
