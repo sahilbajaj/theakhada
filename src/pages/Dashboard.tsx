@@ -25,10 +25,11 @@ function selfSideOf(match: MatchListItem, selfId: string): MatchSide | null {
   return null;
 }
 
-function selfResultOf(match: MatchListItem, selfId: string): "W" | "L" | null {
-  if (match.status !== "final" || !match.winner_side) return null;
+function selfResultOf(match: MatchListItem, selfId: string): "W" | "L" | "T" | null {
+  if (match.status !== "final") return null;
   const side = selfSideOf(match, selfId);
   if (!side) return null;
+  if (!match.winner_side) return "T";
   return side === match.winner_side ? "W" : "L";
 }
 
@@ -171,14 +172,18 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{children}</h2>;
 }
 
-function ResultRail({ result }: { result: "W" | "L" | null }) {
+function ResultRail({ result }: { result: "W" | "L" | "T" | null }) {
   if (!result) return null;
   return (
     <span
       aria-hidden
       className={cn(
         "absolute left-0 top-2 bottom-2 w-1 rounded-full",
-        result === "W" ? "bg-primary shadow-glow-primary" : "bg-muted-foreground/30",
+        result === "W"
+          ? "bg-primary shadow-glow-primary"
+          : result === "T"
+          ? "bg-muted-foreground/60"
+          : "bg-muted-foreground/30",
       )}
     />
   );

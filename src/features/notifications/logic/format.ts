@@ -37,18 +37,19 @@ export function summaryFor(item: NotificationItem, match: MatchListItem | undefi
     return `${actor} reopened your match to edit`;
   }
   // match_finalized — describe the result relative to self if possible.
-  if (!match || !match.winner_side || !selfId) return `${actor} finalized your match`;
+  if (!match || !selfId) return `${actor} finalized your match`;
   const selfSide: MatchSide | null = match.side_a.some((p) => p.profile_id === selfId)
     ? "A"
     : match.side_b.some((p) => p.profile_id === selfId)
     ? "B"
     : null;
   if (!selfSide) return `${actor} finalized your match`;
-  const won = selfSide === match.winner_side;
   const oppRoster = selfSide === "A" ? match.side_b : match.side_a;
   const oppNames = oppRoster.map((p) => displayName(p, prefs)).join(" / ");
   const scoreParts = match.sets
     .map((s) => (selfSide === "A" ? `${s.side_a_games}-${s.side_b_games}` : `${s.side_b_games}-${s.side_a_games}`))
     .join(", ");
+  if (!match.winner_side) return `You tied with ${oppNames} ${scoreParts}`;
+  const won = selfSide === match.winner_side;
   return `${won ? "You beat" : "You lost to"} ${oppNames} ${scoreParts}`;
 }

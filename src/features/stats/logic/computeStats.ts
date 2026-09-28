@@ -1,6 +1,6 @@
 import type { MatchFormat, MatchListItem, MatchSide } from "@/features/matches/types";
 
-export type Result = "W" | "L";
+export type Result = "W" | "L" | "T";
 
 export interface OpponentTally {
   profile_id: string;
@@ -10,15 +10,18 @@ export interface OpponentTally {
   played: number;
   wins: number;
   losses: number;
+  ties: number;
 }
 
 export interface PlayerStats {
   totalPlayed: number;
   totalWins: number;
   totalLosses: number;
+  totalTies: number;
   monthPlayed: number;
   monthWins: number;
   monthLosses: number;
+  monthTies: number;
   currentStreak: { kind: Result; length: number } | null;
   form: Result[]; // most recent first, up to 10
   topOpponents: OpponentTally[]; // top by played, up to 3
@@ -29,9 +32,11 @@ const EMPTY: PlayerStats = {
   totalPlayed: 0,
   totalWins: 0,
   totalLosses: 0,
+  totalTies: 0,
   monthPlayed: 0,
   monthWins: 0,
   monthLosses: 0,
+  monthTies: 0,
   currentStreak: null,
   form: [],
   topOpponents: [],
@@ -71,26 +76,34 @@ export function computeStats(
   // matches sorted most recent first (as delivered by list_recent_matches).
   let totalWins = 0;
   let totalLosses = 0;
+  let totalTies = 0;
   let monthPlayed = 0;
   let monthWins = 0;
   let monthLosses = 0;
+  let monthTies = 0;
   const form: Result[] = [];
   const opponentMap = new Map<string, OpponentTally>();
 
   for (const match of mine) {
-    if (match.status !== "final" || !match.winner_side) continue;
+    if (match.status !== "final") continue;
     const selfSide = selfSideOf(match, profileId)!;
-    const won = selfSide === match.winner_side;
-    if (won) totalWins += 1;
-    else totalLosses += 1;
+    const result: Result = !match.winner_side
+      ? "T"
+      : selfSide === match.winner_side
+      ? "W"
+      : "L";
+    if (result === "W") totalWins += 1;
+    else if (result === "L") totalLosses += 1;
+    else totalTies += 1;
 
     if (inCurrentMonth(match.starts_at, now)) {
       monthPlayed += 1;
-      if (won) monthWins += 1;
-      else monthLosses += 1;
+      if (result === "W") monthWins += 1;
+      else if (result === "L") monthLosses += 1;
+      else monthTies += 1;
     }
 
-    if (form.length < 10) form.push(won ? "W" : "L");
+    if (form.length < 10) form.push(result);
 
     const opponents = selfSide === "A" ? match.side_b : match.side_a;
     for (const opp of opponents) {
@@ -102,10 +115,12 @@ export function computeStats(
         played: 0,
         wins: 0,
         losses: 0,
+        ties: 0,
       };
       tally.played += 1;
-      if (won) tally.wins += 1;
-      else tally.losses += 1;
+      if (result === "W") tally.wins += 1;
+      else if (result === "L") tally.losses += 1;
+      else tally.ties += 1;
       opponentMap.set(opp.profile_id, tally);
     }
   }
@@ -126,12 +141,14 @@ export function computeStats(
     .slice(0, 3);
 
   return {
-    totalPlayed: totalWins + totalLosses,
+    totalPlayed: totalWins + totalLosses + totalTies,
     totalWins,
     totalLosses,
+    totalTies,
     monthPlayed,
     monthWins,
     monthLosses,
+    monthTies,
     currentStreak,
     form,
     topOpponents,

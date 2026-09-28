@@ -32,7 +32,7 @@ function FormPill({ r }: { r: Result }) {
     <span
       className={
         "grid h-6 w-6 place-items-center rounded-full text-[11px] font-bold " +
-        (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
+        (r === "W" ? "bg-primary text-primary-foreground" : r === "T" ? "bg-muted-foreground/40 text-foreground" : "bg-muted text-muted-foreground")
       }
     >
       {r}
@@ -190,7 +190,7 @@ export default function PlayerDetail() {
                     <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
                   </Avatar>
                   <p className="truncate font-medium">{name}</p>
-                  <p className="text-sm tabular-nums text-muted-foreground">{opp.wins}-{opp.losses} · {opp.played}</p>
+                  <p className="text-sm tabular-nums text-muted-foreground">{opp.wins}-{opp.losses}{opp.ties ? `-${opp.ties}` : ""} · {opp.played}</p>
                 </Link>
               );
             })}
@@ -201,7 +201,7 @@ export default function PlayerDetail() {
       <section className="grid gap-2">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent matches</h3>
-          <p className="text-xs text-muted-foreground">{stats.totalPlayed} total · {stats.totalWins}-{stats.totalLosses}</p>
+          <p className="text-xs text-muted-foreground">{stats.totalPlayed} total · {stats.totalWins}-{stats.totalLosses}{stats.totalTies ? `-${stats.totalTies}` : ""}</p>
         </div>
         {myMatches.length ? (
           <div className="grid gap-2">

@@ -176,7 +176,7 @@ export default function Players() {
                   <p className="truncate text-sm font-medium">{name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {stats.totalPlayed
-                      ? `${stats.totalWins}-${stats.totalLosses} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"} · ${points.toFixed(1)} pts`
+                      ? `${stats.totalWins}-${stats.totalLosses}${stats.totalTies ? `-${stats.totalTies}` : ""} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"} · ${points.toFixed(1)} pts`
                       : "No matches yet"}
                   </p>
                 </div>
@@ -187,7 +187,7 @@ export default function Players() {
                         key={i}
                         className={
                           "grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold " +
-                          (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
+                          (r === "W" ? "bg-primary text-primary-foreground" : r === "T" ? "bg-muted-foreground/40 text-foreground" : "bg-muted text-muted-foreground")
                         }
                       >
                         {r}
@@ -198,7 +198,7 @@ export default function Players() {
                         key={i + 3}
                         className={
                           "hidden h-5 w-5 place-items-center rounded-full text-[10px] font-bold sm:grid " +
-                          (r === "W" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
+                          (r === "W" ? "bg-primary text-primary-foreground" : r === "T" ? "bg-muted-foreground/40 text-foreground" : "bg-muted text-muted-foreground")
                         }
                       >
                         {r}
