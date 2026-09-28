@@ -13,6 +13,7 @@ import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { ChallengesSection } from "@/features/challenges/ui/ChallengesSection";
 import { ChallengeSheet } from "@/features/challenges/ui/ChallengeSheet";
+import { ClubContextNudge } from "@/features/matches/ui/ClubContextNudge";
 import { cn } from "@/lib/utils";
 
 function isSameDay(a: Date, b: Date) {
@@ -95,8 +96,9 @@ export default function Dashboard() {
       <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
         <div className="pointer-events-none absolute inset-0 rim-gradient" aria-hidden />
         <div className="relative flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{greeting}</p>
+          <div className="min-w-0">
+            <ClubContextNudge variant="chip" />
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{greeting}</p>
             <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">Hi, {selfName}.</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {liveCount > 0 ? `${liveCount} live · ${todayCount} today` : todayCount > 0 ? `${todayCount} match${todayCount === 1 ? "" : "es"} today` : "No matches yet today."}
