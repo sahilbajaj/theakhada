@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Copy, LogOut, Plus, Shield, Users } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Copy, Inbox, LogOut, Plus, Shield, Users, X } from "lucide-react";
 import { AccessRequestRow, type SignupRequest } from "@/components/AccessRequestRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ export default function Superadmin() {
         </header>
 
         <CreateClubCard />
+        <PendingClubRequestsCard />
         <ClubsList />
       </section>
     </main>
@@ -136,6 +137,104 @@ function CreateClubCard() {
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+interface ClubCreationRequest {
+  id: string;
+  requester_profile_id: string;
+  requester_name: string;
+  proposed_name: string;
+  city: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  reviewed_at: string | null;
+}
+
+const CLUB_REQUESTS_KEY = ["superadmin", "club-creation-requests"] as const;
+
+function PendingClubRequestsCard() {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: CLUB_REQUESTS_KEY,
+    enabled: Boolean(supabase),
+    queryFn: async (): Promise<ClubCreationRequest[]> => {
+      const { data, error } = await supabase!.rpc("list_club_creation_requests" as never, {
+        p_status: "pending",
+      } as never);
+      if (error) throw error;
+      return (data as ClubCreationRequest[] | null) ?? [];
+    },
+  });
+
+  const review = useMutation({
+    mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
+      const { error } = await supabase!.rpc("review_club_creation_request" as never, {
+        p_id: id,
+        p_approve: approve,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: async (_data, vars) => {
+      toast.success(vars.approve ? "Request approved" : "Request rejected");
+      await queryClient.invalidateQueries({ queryKey: CLUB_REQUESTS_KEY });
+    },
+    onError: (error) =>
+      toast.error("Could not update request", {
+        description: error instanceof Error ? error.message : "Try again.",
+      }),
+  });
+
+  const requests = query.data ?? [];
+  if (!query.isLoading && !requests.length) return null;
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-5 shadow-card">
+      <div className="mb-4 flex items-center gap-2">
+        <Inbox className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-semibold">Pending club requests</h2>
+      </div>
+      {query.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : (
+        <ul className="grid gap-3">
+          {requests.map((r) => (
+            <li key={r.id} className="rounded-lg border border-border/60 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{r.proposed_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Requested by {r.requester_name}
+                    {r.city ? ` · ${r.city}` : ""}
+                  </p>
+                  {r.notes ? <p className="mt-2 whitespace-pre-wrap text-sm">{r.notes}</p> : null}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={review.isPending}
+                    onClick={() => review.mutate({ id: r.id, approve: false })}
+                  >
+                    <X className="mr-1 h-4 w-4" />
+                    Reject
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={review.isPending}
+                    onClick={() => review.mutate({ id: r.id, approve: true })}
+                  >
+                    <Check className="mr-1 h-4 w-4" />
+                    Approve
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ import { useClubRoster, type RosterMember } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
+import { ClubContextNudge } from "@/features/matches/ui/ClubContextNudge";
 import {
   useCreateMatch,
   useDeleteMatch,
@@ -372,6 +373,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
         <div className="grid gap-4 overflow-y-auto px-4 pb-2">
           {phase === "setup" ? (
             <>
+              <ClubContextNudge onBeforeNavigate={() => onOpenChange(false)} />
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Format</p>
