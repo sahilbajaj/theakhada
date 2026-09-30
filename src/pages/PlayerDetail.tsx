@@ -9,7 +9,7 @@ import { AvatarUploadButton } from "@/components/AvatarUploadButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
-import { useRecentMatches } from "@/features/matches/data/useMatches";
+import { useAllMatches } from "@/features/matches/data/useMatches";
 import { MatchCard } from "@/features/matches/ui/MatchCard";
 import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
 import { ChallengeSheet } from "@/features/challenges/ui/ChallengeSheet";
@@ -45,7 +45,7 @@ export default function PlayerDetail() {
   const { profile, role } = useAuth();
   const canEditPhoto = Boolean(profileId) && (profile?.id === profileId || role === "owner" || role === "admin");
   const rosterQuery = useClubRoster();
-  const matchesQuery = useRecentMatches(200);
+  const matchesQuery = useAllMatches({ profileId });
   const { preferNicknames } = useClubSettings();
   const [entryOpen, setEntryOpen] = useState(false);
   const [entryMatchId, setEntryMatchId] = useState<string | null>(null);

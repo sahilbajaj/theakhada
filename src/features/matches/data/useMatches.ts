@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { BestOf, MatchFormat, MatchListItem, SuspendReason } from "@/features/matches/types";
@@ -15,6 +15,73 @@ export function useRecentMatches(limit = 25) {
       const { data, error } = await supabase!.rpc("list_recent_matches" as never, { p_club_id: clubId, p_limit: limit } as never);
       if (error) throw error;
       return (data as MatchListItem[] | null) ?? [];
+    },
+  });
+}
+
+interface MatchCursor {
+  startsAt: string;
+  matchId: string;
+}
+
+interface MatchPageInput {
+  clubId: string | null;
+  cursor: MatchCursor | null;
+  limit: number;
+  profileId?: string | null;
+  finalOnly?: boolean;
+}
+
+async function fetchMatchPage({ clubId, cursor, limit, profileId, finalOnly }: MatchPageInput): Promise<MatchListItem[]> {
+  const { data, error } = await supabase!.rpc("list_matches_page" as never, {
+    p_club_id: clubId,
+    p_before_starts_at: cursor?.startsAt ?? null,
+    p_before_id: cursor?.matchId ?? null,
+    p_limit: limit,
+    p_profile_id: profileId ?? null,
+    p_final_only: finalOnly ?? false,
+  } as never);
+  if (error) throw error;
+  return (data as MatchListItem[] | null) ?? [];
+}
+
+function cursorAfter(rows: MatchListItem[]): MatchCursor {
+  const last = rows[rows.length - 1];
+  return { startsAt: last.starts_at, matchId: last.match_id };
+}
+
+const PAGE_SIZE = 50;
+
+// Paged history for browsing (Scores "All" tab).
+export function useMatchesPaged({ finalOnly = false, enabled = true }: { finalOnly?: boolean; enabled?: boolean } = {}) {
+  const { clubId } = useAuth();
+  return useInfiniteQuery({
+    queryKey: [...MATCHES_KEY, "paged", clubId, finalOnly],
+    enabled: Boolean(supabase && clubId) && enabled,
+    initialPageParam: null as MatchCursor | null,
+    queryFn: ({ pageParam }) => fetchMatchPage({ clubId, cursor: pageParam, limit: PAGE_SIZE, finalOnly }),
+    getNextPageParam: (lastPage) => (lastPage.length < PAGE_SIZE ? undefined : cursorAfter(lastPage)),
+  });
+}
+
+const FULL_HISTORY_PAGE_SIZE = 500;
+
+// Full club history (or one player's), for stats that must not be
+// truncated. Walks every page; fine at club scale.
+export function useAllMatches({ profileId, finalOnly = false }: { profileId?: string | null; finalOnly?: boolean } = {}) {
+  const { clubId } = useAuth();
+  return useQuery({
+    queryKey: [...MATCHES_KEY, "all", clubId, profileId ?? null, finalOnly],
+    enabled: Boolean(supabase && clubId),
+    queryFn: async (): Promise<MatchListItem[]> => {
+      const all: MatchListItem[] = [];
+      let cursor: MatchCursor | null = null;
+      for (;;) {
+        const page = await fetchMatchPage({ clubId, cursor, limit: FULL_HISTORY_PAGE_SIZE, profileId, finalOnly });
+        all.push(...page);
+        if (page.length < FULL_HISTORY_PAGE_SIZE) return all;
+        cursor = cursorAfter(page);
+      }
     },
   });
 }

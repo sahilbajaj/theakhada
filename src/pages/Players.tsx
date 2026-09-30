@@ -11,7 +11,7 @@ import { AvatarUploadButton } from "@/components/AvatarUploadButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { useClubSettings } from "@/hooks/useClubSettings";
-import { useRecentMatches } from "@/features/matches/data/useMatches";
+import { useAllMatches } from "@/features/matches/data/useMatches";
 import { computeStats } from "@/features/stats/logic/computeStats";
 import type { SeedFormat } from "@/features/seeding/data/useSeeding";
 import { computeScores, suggestedOrder } from "@/features/seeding/logic/computeSuggested";
@@ -23,7 +23,7 @@ export default function Players() {
   const { role, profile } = useAuth();
   const isAdmin = role === "owner" || role === "admin";
   const rosterQuery = useClubRoster();
-  const matchesQuery = useRecentMatches(200);
+  const matchesQuery = useAllMatches({ finalOnly: true });
   const { preferNicknames } = useClubSettings();
   const [query, setQuery] = useState("");
   const [format, setFormat] = useState<SeedFormat>("combined");

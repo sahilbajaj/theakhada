@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
-import { useRecentMatches, useReviewDay, useReviewMatch, useUnreviewedMatches } from "@/features/matches/data/useMatches";
+import { useMatchesPaged, useRecentMatches, useReviewDay, useReviewMatch, useUnreviewedMatches } from "@/features/matches/data/useMatches";
 import { MatchCard } from "@/features/matches/ui/MatchCard";
 import { ReviewQueue } from "@/features/matches/ui/ReviewQueue";
 import { ScoreEntry } from "@/features/matches/ui/ScoreEntry";
@@ -21,6 +21,10 @@ export default function Scores() {
   const reviewDay = useReviewDay();
   const [entryOpen, setEntryOpen] = useState(false);
   const [entryMatchId, setEntryMatchId] = useState<string | null>(null);
+  const [tab, setTab] = useState("live");
+  const [allTabOpened, setAllTabOpened] = useState(false);
+  const allQuery = useMatchesPaged({ finalOnly: true, enabled: allTabOpened });
+  const allMatches = useMemo(() => allQuery.data?.pages.flat() ?? [], [allQuery.data]);
 
   const { live, recent } = useMemo(() => {
     const rows = matchesQuery.data ?? [];
@@ -74,10 +78,17 @@ export default function Scores() {
         </div>
       </section>
 
-      <Tabs defaultValue="live">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          setTab(value);
+          if (value === "all") setAllTabOpened(true);
+        }}
+      >
         <TabsList>
           <TabsTrigger value="live">Live ({live.length})</TabsTrigger>
           <TabsTrigger value="recent">Recent ({recent.length})</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
           {isAdmin ? <TabsTrigger value="review">To review ({unreviewed.length})</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="live" className="mt-4 grid gap-3">
@@ -106,6 +117,36 @@ export default function Scores() {
                 showReviewState={isAdmin}
               />
             ))
+          ) : (
+            <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
+              Finalized matches appear here.
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="all" className="mt-4 grid gap-3">
+          {allQuery.isLoading ? (
+            <Skeleton className="h-24 rounded-lg" />
+          ) : allMatches.length ? (
+            <>
+              {allMatches.map((match) => (
+                <MatchCard
+                  key={match.match_id}
+                  match={match}
+                  preferNicknames={preferNicknames}
+                  onOpen={openExisting}
+                  showReviewState={isAdmin}
+                />
+              ))}
+              {allQuery.hasNextPage ? (
+                <Button
+                  variant="outline"
+                  onClick={() => allQuery.fetchNextPage()}
+                  disabled={allQuery.isFetchingNextPage}
+                >
+                  {allQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+                </Button>
+              ) : null}
+            </>
           ) : (
             <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
               Finalized matches appear here.
