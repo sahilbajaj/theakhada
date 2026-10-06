@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Users2, User } from "lucide-react";
@@ -268,7 +269,7 @@ function SlotRow({
     >
       {member ? (
         <Avatar className="h-9 w-9 shrink-0">
-          {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name ?? ""} /> : null}
+          {visibleAvatar(member.profile_id, member.avatar_url) ? <AvatarImage src={visibleAvatar(member.profile_id, member.avatar_url)!} alt={name ?? ""} /> : null}
           <AvatarFallback>{initialsFrom(name ?? "")}</AvatarFallback>
         </Avatar>
       ) : (

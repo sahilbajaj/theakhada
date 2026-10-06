@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { useMemo, useState } from "react";
 import { Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -112,7 +113,7 @@ export function NotificationBell() {
                     }
                   >
                     <Avatar className="h-8 w-8">
-                      {item.actor_avatar_url ? <AvatarImage src={item.actor_avatar_url} alt={actorName(item, { preferNicknames })} /> : null}
+                      {visibleAvatar(item.actor_profile_id, item.actor_avatar_url) ? <AvatarImage src={visibleAvatar(item.actor_profile_id, item.actor_avatar_url)!} alt={actorName(item, { preferNicknames })} /> : null}
                       <AvatarFallback>{initialsFrom(actorName(item, { preferNicknames }))}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">

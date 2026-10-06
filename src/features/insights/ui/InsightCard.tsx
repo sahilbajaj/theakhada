@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import type { LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ export interface InsightCardProps {
 }
 
 export function nameOfPlayer(player: InsightPlayer, preferNicknames: boolean) {
-  return displayName({ full_name: player.full_name, nickname: player.nickname }, { preferNicknames });
+  return displayName({ full_name: player.full_name, nickname: player.nickname, profile_id: player.profile_id }, { preferNicknames });
 }
 
 export function InsightCard({ icon: Icon, title, subtitle, empty, body, preferNicknames }: InsightCardProps) {
@@ -43,7 +44,7 @@ export function InsightCard({ icon: Icon, title, subtitle, empty, body, preferNi
             <div className="flex shrink-0 -space-x-2">
               {body.roster.map((p) => (
                 <Avatar key={p.profile_id} className="h-11 w-11 border-2 border-card">
-                  {p.avatar_url ? <AvatarImage src={p.avatar_url} alt={nameOfPlayer(p, preferNicknames)} /> : null}
+                  {visibleAvatar(p.profile_id, p.avatar_url) ? <AvatarImage src={visibleAvatar(p.profile_id, p.avatar_url)!} alt={nameOfPlayer(p, preferNicknames)} /> : null}
                   <AvatarFallback>{initialsFrom(nameOfPlayer(p, preferNicknames))}</AvatarFallback>
                 </Avatar>
               ))}

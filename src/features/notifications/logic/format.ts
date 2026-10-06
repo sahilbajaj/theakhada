@@ -12,6 +12,7 @@ export function actorName(item: NotificationItem, prefs: Prefs): string {
       full_name: item.actor_full_name ?? undefined,
       nickname: item.actor_nickname ?? undefined,
       email: null,
+      profile_id: item.actor_profile_id,
     },
     prefs,
   ) || "Someone";

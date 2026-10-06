@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { useEffect, useMemo, useState } from "react";
 import { Minus, PauseCircle, PlayCircle, Plus, Sparkles, Trash2 } from "lucide-react";
 import {
@@ -507,7 +508,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <SideScoreCard
                 label="Side A"
                 names={filledA.map((id) => nameFor(id))}
-                avatars={filledA.map((id) => memberFor(id)?.avatar_url ?? null)}
+                avatars={filledA.map((id) => visibleAvatar(id, memberFor(id)?.avatar_url))}
                 games={currentSet?.side_a_games ?? 0}
                 onSetGames={(v) => setGames("A", v)}
                 tiebreak={currentSet?.tiebreak_a ?? null}
@@ -518,7 +519,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
               <SideScoreCard
                 label="Side B"
                 names={filledB.map((id) => nameFor(id))}
-                avatars={filledB.map((id) => memberFor(id)?.avatar_url ?? null)}
+                avatars={filledB.map((id) => visibleAvatar(id, memberFor(id)?.avatar_url))}
                 games={currentSet?.side_b_games ?? 0}
                 onSetGames={(v) => setGames("B", v)}
                 tiebreak={currentSet?.tiebreak_b ?? null}

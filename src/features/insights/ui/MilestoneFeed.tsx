@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { Award, Handshake, Medal, Sparkles, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { nameOfPlayer } from "@/features/insights/ui/InsightCard";
@@ -56,7 +57,7 @@ export function MilestoneFeed({ items, preferNicknames }: { items: MilestoneItem
             className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card"
           >
             <Avatar className="h-10 w-10 shrink-0">
-              {item.player.avatar_url ? <AvatarImage src={item.player.avatar_url} alt={name} /> : null}
+              {visibleAvatar(item.player.profile_id, item.player.avatar_url) ? <AvatarImage src={visibleAvatar(item.player.profile_id, item.player.avatar_url)!} alt={name} /> : null}
               <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">

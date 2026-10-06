@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,7 @@ export function PickerSheet({ open, onOpenChange, candidates, disabledIds = [], 
                   className="flex items-center gap-2 rounded-full border bg-card px-2 py-1 text-sm shadow-sm transition hover:border-primary/50"
                 >
                   <Avatar className="h-6 w-6">
-                    {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
+                    {visibleAvatar(member.profile_id, member.avatar_url) ? <AvatarImage src={visibleAvatar(member.profile_id, member.avatar_url)!} alt={name} /> : null}
                     <AvatarFallback className="text-[10px]">{initialsFrom(name)}</AvatarFallback>
                   </Avatar>
                   <span className="truncate">{name}</span>
@@ -81,7 +82,7 @@ export function PickerSheet({ open, onOpenChange, candidates, disabledIds = [], 
                     className="flex items-center gap-3"
                   >
                     <Avatar className="h-8 w-8">
-                      {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
+                      {visibleAvatar(member.profile_id, member.avatar_url) ? <AvatarImage src={visibleAvatar(member.profile_id, member.avatar_url)!} alt={name} /> : null}
                       <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">

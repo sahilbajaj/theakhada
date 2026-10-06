@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { useEffect, useMemo, useState } from "react";
 import { UsersRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -101,7 +102,7 @@ export function RosterPickerSheet({ open, onOpenChange, existingNames, onConfirm
                     onCheckedChange={() => !already && toggle(member.profile_id)}
                   />
                   <Avatar className="h-8 w-8">
-                    {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
+                    {visibleAvatar(member.profile_id, member.avatar_url) ? <AvatarImage src={visibleAvatar(member.profile_id, member.avatar_url)!} alt={name} /> : null}
                     <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
