@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { format as formatDate } from "date-fns";
 import { Check, X, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -180,7 +181,7 @@ function ParticipantAvatar({ p, name }: { p: ChallengeParticipant; name: string 
         : "";
   return (
     <Avatar className={`h-7 w-7 ${ring}`}>
-      {p.avatar_url ? <AvatarImage src={p.avatar_url} alt={name} /> : null}
+      {visibleAvatar(p.profile_id, p.avatar_url) ? <AvatarImage src={visibleAvatar(p.profile_id, p.avatar_url)!} alt={name} /> : null}
       <AvatarFallback className="text-[10px]">{initialsFrom(name)}</AvatarFallback>
     </Avatar>
   );

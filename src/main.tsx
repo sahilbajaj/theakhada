@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AnonymitySync } from "@/components/AnonymitySync";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import App from "./App";
 import "./index.css";
@@ -25,7 +26,7 @@ createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <TooltipProvider>
           <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-            <App />
+            <AnonymitySync><App /></AnonymitySync>
           </BrowserRouter>
           <Toaster />
         </TooltipProvider>

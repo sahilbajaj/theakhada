@@ -16,7 +16,7 @@ import { ChallengeSheet } from "@/features/challenges/ui/ChallengeSheet";
 import { computeStats, matchesForProfile, type Result } from "@/features/stats/logic/computeStats";
 import { displayName, formalName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
-import { isHiddenFrom } from "@/lib/anonymity";
+import { isHiddenFrom, visibleAvatar } from "@/lib/anonymity";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -225,7 +225,7 @@ export default function PlayerDetail() {
           <div className="grid gap-2">
             {stats.topOpponents.map((opp) => {
               const name = displayName(
-                { full_name: opp.full_name, nickname: opp.nickname, email: null },
+                { full_name: opp.full_name, nickname: opp.nickname, email: null, profile_id: opp.profile_id },
                 { preferNicknames },
               );
               return (
@@ -235,7 +235,7 @@ export default function PlayerDetail() {
                   className="grid items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card transition hover:border-primary/40 sm:grid-cols-[auto_1fr_auto]"
                 >
                   <Avatar className="h-8 w-8">
-                    {opp.avatar_url ? <AvatarImage src={opp.avatar_url} alt={name} /> : null}
+                    {visibleAvatar(opp.profile_id, opp.avatar_url) ? <AvatarImage src={visibleAvatar(opp.profile_id, opp.avatar_url)!} alt={name} /> : null}
                     <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
                   </Avatar>
                   <p className="truncate font-medium">{name}</p>

@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -109,7 +110,7 @@ function FeedCard({
     >
       <div className="flex items-center gap-3">
         <Avatar className="h-8 w-8 shrink-0">
-          {item.actor_avatar_url ? <AvatarImage src={item.actor_avatar_url} alt={actor} /> : null}
+          {visibleAvatar(item.actor_profile_id, item.actor_avatar_url) ? <AvatarImage src={visibleAvatar(item.actor_profile_id, item.actor_avatar_url)!} alt={actor} /> : null}
           <AvatarFallback>{initialsFrom(actor)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
@@ -199,7 +200,7 @@ function SideLine({
       <div className="flex -space-x-1.5 shrink-0">
         {roster.map((p) => (
           <Avatar key={p.profile_id} className="h-6 w-6 border-2 border-background">
-            {p.avatar_url ? <AvatarImage src={p.avatar_url} alt={displayName(p, { preferNicknames })} /> : null}
+            {visibleAvatar(p.profile_id, p.avatar_url) ? <AvatarImage src={visibleAvatar(p.profile_id, p.avatar_url)!} alt={displayName(p, { preferNicknames })} /> : null}
             <AvatarFallback className="text-[10px]">{initialsFrom(displayName(p, { preferNicknames }))}</AvatarFallback>
           </Avatar>
         ))}

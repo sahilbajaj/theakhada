@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { displayName } from "@/lib/displayName";
@@ -28,7 +29,7 @@ function SideRow({ side, roster, sets, matchStatus, winner, preferNicknames }: {
       <div className="flex -space-x-2">
         {roster.map((p, i) => (
           <Avatar key={p.profile_id} className={"h-8 w-8 border-2 border-background " + (i > 0 ? "" : "")}>
-            {p.avatar_url ? <AvatarImage src={p.avatar_url} alt={displayName(p, { preferNicknames })} /> : null}
+            {visibleAvatar(p.profile_id, p.avatar_url) ? <AvatarImage src={visibleAvatar(p.profile_id, p.avatar_url)!} alt={displayName(p, { preferNicknames })} /> : null}
             <AvatarFallback>{initialsFrom(displayName(p, { preferNicknames }))}</AvatarFallback>
           </Avatar>
         ))}

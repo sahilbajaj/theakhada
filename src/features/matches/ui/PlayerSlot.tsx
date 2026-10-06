@@ -1,3 +1,4 @@
+import { visibleAvatar } from "@/lib/anonymity";
 import { UserPlus, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export function PlayerSlot({ member, preferNicknames, onPick, onClear, locked, l
     return (
       <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-card">
         <Avatar>
-          {member.avatar_url ? <AvatarImage src={member.avatar_url} alt={name} /> : null}
+          {visibleAvatar(member.profile_id, member.avatar_url) ? <AvatarImage src={visibleAvatar(member.profile_id, member.avatar_url)!} alt={name} /> : null}
           <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
