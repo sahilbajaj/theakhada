@@ -39,12 +39,20 @@ export function useClubRoster() {
     queryKey: ["club-roster", clubId],
     enabled: Boolean(supabase) && Boolean(clubId),
     queryFn: async (): Promise<RosterMember[]> => {
-      const { data, error } = await supabase!
+      const base = "profile_id, role, seed, singles_seed, doubles_seed, profiles:profile_id(id, full_name, nickname, avatar_url, rating, email, role";
+      let res = await supabase!
         .from("club_memberships" as never)
-        .select("profile_id, role, seed, singles_seed, doubles_seed, profiles:profile_id(id, full_name, nickname, avatar_url, rating, email, role, is_anonymous)")
+        .select(`${base}, is_anonymous)`)
         .eq("club_id", clubId!);
-      if (error) throw error;
-      const rows = (data as MembershipRow[] | null) ?? [];
+      if (res.error) {
+        // Fallback until the anonymous-profiles SQL is applied.
+        res = await supabase!
+          .from("club_memberships" as never)
+          .select(`${base})`)
+          .eq("club_id", clubId!);
+      }
+      if (res.error) throw res.error;
+      const rows = (res.data as MembershipRow[] | null) ?? [];
       return rows
         .filter((row) => row.profiles)
         .map((row) => ({
