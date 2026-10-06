@@ -16,6 +16,11 @@ import { ChallengeSheet } from "@/features/challenges/ui/ChallengeSheet";
 import { computeStats, matchesForProfile, type Result } from "@/features/stats/logic/computeStats";
 import { displayName, formalName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
+import { isHiddenFrom } from "@/lib/anonymity";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/components/ui/sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -65,6 +70,21 @@ export default function PlayerDetail() {
     [matchesQuery.data, profileId],
   );
 
+  const queryClient = useQueryClient();
+  const setAnonymous = useMutation({
+    mutationFn: async (value: boolean) => {
+      if (!supabase) throw new Error("Not connected");
+      const { error } = await supabase.rpc("set_my_anonymous" as never, { p_value: value } as never);
+      if (error) throw error;
+    },
+    onSuccess: (_d, value) => {
+      void queryClient.invalidateQueries({ queryKey: ["club-roster"] });
+      toast.success(value ? "Your profile is now hidden" : "Your profile is visible again");
+    },
+    onError: (error) =>
+      toast.error("Could not update privacy", { description: error instanceof Error ? error.message : "Try again." }),
+  });
+
   const isLoading = rosterQuery.isLoading || matchesQuery.isLoading;
   const notFound = !isLoading && !member;
 
@@ -76,6 +96,19 @@ export default function PlayerDetail() {
         </Link>
         <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
           Player not found.
+        </div>
+      </div>
+    );
+  }
+
+  if (member && isHiddenFrom(member, { profileId: profile?.id, role })) {
+    return (
+      <div className="grid gap-4">
+        <Link to="/players" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="h-4 w-4" /> Back to players
+        </Link>
+        <div className="rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground shadow-card">
+          This player is private.
         </div>
       </div>
     );
@@ -111,6 +144,7 @@ export default function PlayerDetail() {
             <h2 className="truncate text-2xl font-semibold">{primary}</h2>
             {formal !== primary ? <p className="truncate text-sm text-muted-foreground">{formal}</p> : null}
             <div className="mt-1 flex items-center gap-2">
+              {member.is_anonymous ? <Badge variant="secondary">Hidden</Badge> : null}
               {member.seed != null ? <Badge>Seed #{member.seed}</Badge> : null}
               <Badge variant="outline">Rating {member.rating != null ? member.rating.toFixed(1) : "—"}</Badge>
               {stats.currentStreak ? (
@@ -136,6 +170,21 @@ export default function PlayerDetail() {
           </div>
         </div>
       </section>
+
+      {isSelf ? (
+        <section className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card">
+          <div>
+            <p className="text-sm font-medium">Hide my profile</p>
+            <p className="text-xs text-muted-foreground">Other members won't see you in the roster or rankings.</p>
+          </div>
+          <Switch
+            checked={member.is_anonymous}
+            disabled={setAnonymous.isPending}
+            onCheckedChange={(v) => setAnonymous.mutate(v)}
+            aria-label="Hide my profile"
+          />
+        </section>
+      ) : null}
 
       {profileId && !isSelf ? (
         <ChallengeSheet

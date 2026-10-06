@@ -18,6 +18,7 @@ import { computeScores, suggestedOrder } from "@/features/seeding/logic/computeS
 import { SeedingPane, seedFor } from "@/features/seeding/ui/SeedingPane";
 import { displayName } from "@/lib/displayName";
 import { initialsFrom } from "@/lib/initials";
+import { isHiddenFrom } from "@/lib/anonymity";
 
 export default function Players() {
   const { role, profile } = useAuth();
@@ -33,22 +34,26 @@ export default function Players() {
     () => (rosterQuery.data ?? []).filter((m) => m.role !== "guest"),
     [rosterQuery.data],
   );
+  const visibleRoster = useMemo(
+    () => roster.filter((m) => !isHiddenFrom(m, { profileId: profile?.id, role })),
+    [roster, profile?.id, role],
+  );
   const matches = matchesQuery.data ?? [];
 
   const playedIdsForFormat = useMemo(() => {
     if (format === "combined") return null;
-    return new Set(suggestedOrder(roster, matches, format));
-  }, [roster, matches, format]);
+    return new Set(suggestedOrder(visibleRoster, matches, format));
+  }, [visibleRoster, matches, format]);
 
   const pointsByProfile = useMemo(() => {
     const map = new Map<string, number>();
-    for (const s of computeScores(roster, matches, format)) map.set(s.profile_id, s.score);
+    for (const s of computeScores(visibleRoster, matches, format)) map.set(s.profile_id, s.score);
     return map;
-  }, [roster, matches, format]);
+  }, [visibleRoster, matches, format]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return roster
+    return visibleRoster
       .filter((m) => {
         if (playedIdsForFormat && seedFor(m, format) == null && !playedIdsForFormat.has(m.profile_id)) {
           return false;
@@ -71,7 +76,16 @@ export default function Players() {
         if (sb != null) return 1;
         return (b.member.rating ?? 0) - (a.member.rating ?? 0);
       });
-  }, [roster, matches, query, format, playedIdsForFormat]);
+  }, [visibleRoster, matches, query, format, playedIdsForFormat]);
+
+  const rankBySeed = useMemo(() => {
+    const map = new Map<string, number>();
+    visibleRoster
+      .filter((m) => seedFor(m, format) != null)
+      .sort((a, b) => (seedFor(a, format) ?? 0) - (seedFor(b, format) ?? 0))
+      .forEach((m, i) => map.set(m.profile_id, i + 1));
+    return map;
+  }, [visibleRoster, format]);
 
   const managing = isAdmin && mode === "manage";
 
@@ -157,7 +171,7 @@ export default function Players() {
         <div className="grid gap-2">
           {rows.map(({ member, stats }) => {
             const name = displayName(member, { preferNicknames });
-            const seed = seedFor(member, format);
+            const seed = seedFor(member, format) != null ? rankBySeed.get(member.profile_id) ?? null : null;
             const points = pointsByProfile.get(member.profile_id) ?? 0;
             return (
               <Link
@@ -173,7 +187,10 @@ export default function Players() {
                   <AvatarFallback>{initialsFrom(name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{name}</p>
+                  <p className="truncate text-sm font-medium">
+                    {name}
+                    {member.is_anonymous ? <Badge variant="secondary" className="ml-2 text-[10px]">Hidden</Badge> : null}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {stats.totalPlayed
                       ? `${stats.totalWins}-${stats.totalLosses}${stats.totalTies ? `-${stats.totalTies}` : ""} · ${stats.totalPlayed} match${stats.totalPlayed === 1 ? "" : "es"} · ${points.toFixed(1)} pts`
