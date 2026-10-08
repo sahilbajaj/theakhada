@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClubRoster } from "@/hooks/useClubRoster";
 import { isHiddenFrom, setHiddenProfileIds } from "@/lib/anonymity";
@@ -14,6 +14,7 @@ export function AnonymitySync({ children }: { children: ReactNode }) {
     setHiddenProfileIds(ids);
     return [...ids].sort().join(",");
   }, [data, profile?.id, role]);
-  // Remount-free re-render: children re-render whenever this component does.
-  return <div className="contents" data-hidden-key={key}>{children}</div>;
+  // Re-mount the app only when the hidden set actually changes, so every
+  // name and photo picks up the new privacy state right away.
+  return <Fragment key={key}>{children}</Fragment>;
 }
