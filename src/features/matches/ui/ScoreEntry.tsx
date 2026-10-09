@@ -171,6 +171,10 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
 
   const roster = rosterQuery.data ?? [];
   const rosterById = useMemo(() => new Map(roster.map((r) => [r.profile_id, r])), [roster]);
+  const pickableRoster = useMemo(
+    () => roster.filter((r) => !r.is_anonymous || r.profile_id === profile?.id),
+    [roster, profile?.id],
+  );
   const currentSet = drafts[currentSetIdx];
 
   const memberFor = (id: string | null): RosterMember | undefined => (id ? rosterById.get(id) : undefined);
@@ -642,7 +646,7 @@ export function ScoreEntry({ open, onOpenChange, matchId }: Props) {
       <PickerSheet
         open={Boolean(pickerFor)}
         onOpenChange={(nextOpen) => !nextOpen && setPickerFor(null)}
-        candidates={roster}
+        candidates={pickableRoster}
         disabledIds={disabledForPicker as string[]}
         recentIds={recentIds}
         preferNicknames={preferNicknames}
