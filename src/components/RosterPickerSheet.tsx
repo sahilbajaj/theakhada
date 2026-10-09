@@ -51,7 +51,7 @@ export function RosterPickerSheet({ open, onOpenChange, existingNames, onConfirm
 
   function nameFor(member: RosterMember) {
     return displayName(
-      { full_name: member.full_name, nickname: member.nickname },
+      { full_name: member.full_name, nickname: member.nickname, profile_id: member.profile_id },
       { preferNicknames },
     );
   }
