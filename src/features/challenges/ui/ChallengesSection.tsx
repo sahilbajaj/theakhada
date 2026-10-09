@@ -15,10 +15,10 @@ import {
   type ChallengeParticipant,
 } from "@/features/challenges/data/useChallenges";
 import { initialsFrom } from "@/lib/initials";
+import { displayName } from "@/lib/displayName";
 
 function nameOf(p: ChallengeParticipant, preferNicknames: boolean): string {
-  if (preferNicknames && p.nickname) return p.nickname;
-  return p.full_name ?? "Member";
+  return displayName(p, { preferNicknames });
 }
 
 export function ChallengesSection() {
