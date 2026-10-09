@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   BarChart3,
   CalendarDays,
@@ -13,6 +13,7 @@ import {
   Sun,
   Swords,
   Trophy,
+  UserRound,
   UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ const comingSoonNav = [
 ];
 
 function NavItems({ compact = false }: { compact?: boolean }) {
-  const { role, isSuperadmin } = useAuth();
+  const { profile, role, isSuperadmin } = useAuth();
   const isAdmin = role === "owner" || role === "admin";
 
   return (
@@ -72,6 +73,18 @@ function NavItems({ compact = false }: { compact?: boolean }) {
             )}
           </NavLink>
         ))}
+        {compact || !profile?.id ? null : (
+          <NavLink
+            to={`/players/${profile.id}`}
+            className={({ isActive }) => cn(
+              "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+              isActive && "bg-secondary text-foreground before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:shadow-glow-primary",
+            )}
+          >
+            <UserRound className="h-4 w-4" />
+            <span className="truncate">My profile</span>
+          </NavLink>
+        )}
       </nav>
       {compact ? null : (
         <div className="grid gap-1">
@@ -168,10 +181,15 @@ export function AppShell() {
             <div className="flex items-center gap-2">
               <ClubPicker />
               {isLoading ? <Badge variant="outline">Syncing</Badge> : null}
-              {profile ? (
-                <Badge variant="outline" className="hidden max-w-[220px] truncate capitalize sm:inline-flex">
-                  {profile.fullName} · {role}
-                </Badge>
+              {profile?.id ? (
+                <Link to={`/players/${profile.id}`} aria-label="My profile" className="hidden sm:inline-flex">
+                  <Badge
+                    variant="outline"
+                    className="max-w-[220px] cursor-pointer truncate capitalize transition hover:border-primary/50 hover:text-foreground"
+                  >
+                    {profile.fullName} · {role}
+                  </Badge>
+                </Link>
               ) : null}
               {!demoMode ? <NotificationBell /> : null}
               <Button
