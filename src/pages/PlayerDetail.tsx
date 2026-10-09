@@ -71,15 +71,19 @@ export default function PlayerDetail() {
   );
 
   const queryClient = useQueryClient();
+  const isAdmin = role === "owner" || role === "admin";
   const setAnonymous = useMutation({
     mutationFn: async (value: boolean) => {
       if (!supabase) throw new Error("Not connected");
-      const { error } = await supabase.rpc("set_my_anonymous" as never, { p_value: value } as never);
+      const { error } = isSelf
+        ? await supabase.rpc("set_my_anonymous" as never, { p_value: value } as never)
+        : await supabase.rpc("set_member_anonymous" as never, { p_profile_id: profileId, p_value: value } as never);
       if (error) throw error;
     },
     onSuccess: (_d, value) => {
       void queryClient.invalidateQueries({ queryKey: ["club-roster"] });
-      toast.success(value ? "Your profile is now hidden" : "Your profile is visible again");
+      if (isSelf) toast.success(value ? "Your profile is now hidden" : "Your profile is visible again");
+      else toast.success(value ? "Player is now hidden" : "Player is visible again");
     },
     onError: (error) =>
       toast.error("Could not update privacy", { description: error instanceof Error ? error.message : "Try again." }),
@@ -171,17 +175,21 @@ export default function PlayerDetail() {
         </div>
       </section>
 
-      {isSelf ? (
+      {isSelf || isAdmin ? (
         <section className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card">
           <div>
-            <p className="text-sm font-medium">Hide my profile</p>
-            <p className="text-xs text-muted-foreground">Other members won't see you in the roster or rankings.</p>
+            <p className="text-sm font-medium">{isSelf ? "Hide my profile" : "Hide this player"}</p>
+            <p className="text-xs text-muted-foreground">
+              {isSelf
+                ? "Other members won't see you in the roster or rankings."
+                : "Other members won't see them in the roster or rankings. They can unhide themselves."}
+            </p>
           </div>
           <Switch
             checked={member.is_anonymous}
             disabled={setAnonymous.isPending}
             onCheckedChange={(v) => setAnonymous.mutate(v)}
-            aria-label="Hide my profile"
+            aria-label={isSelf ? "Hide my profile" : "Hide this player"}
           />
         </section>
       ) : null}
